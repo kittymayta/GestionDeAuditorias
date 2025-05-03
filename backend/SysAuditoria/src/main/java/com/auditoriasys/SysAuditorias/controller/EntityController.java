@@ -32,7 +32,7 @@ public class EntityController {
 		return entidadsService.findEntidadById(id);
 	}
 	
-	@PostMapping("create")
+	@PostMapping
 	public Entidad crear(@RequestBody Entidad Entidad) {
 		return entidadsService.createEntidad(Entidad);
 	}
