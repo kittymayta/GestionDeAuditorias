@@ -19,7 +19,6 @@ public class Item {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "codigo_item")
 	private int codigoItem;
 	
 	@Column(name = "nombre_item")
