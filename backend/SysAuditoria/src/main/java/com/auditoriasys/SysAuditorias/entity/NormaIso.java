@@ -2,6 +2,8 @@ package com.auditoriasys.SysAuditorias.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -16,7 +18,7 @@ import lombok.NoArgsConstructor;
 public class NormaIso {
 	
 	@Id
-	@Column(name = "codigo_norma_iso")
+	@GeneratedValue(strategy = GenerationType.AUTO)
 	private int codigoNormaIso;
 	
 	@Column(name = "nombre_norma_iso")
