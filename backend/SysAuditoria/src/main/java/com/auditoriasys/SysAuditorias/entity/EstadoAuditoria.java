@@ -19,7 +19,6 @@ public class EstadoAuditoria {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "codigo_estado_auditoria")
 	private int codigoEstadoAuditoria;
 	
 	@Column(name = "nombre_estado_auditoria")
