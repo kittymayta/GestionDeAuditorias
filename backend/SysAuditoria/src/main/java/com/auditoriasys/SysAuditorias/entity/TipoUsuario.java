@@ -19,8 +19,7 @@ import lombok.NoArgsConstructor;
 public class TipoUsuario {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "codigo_tipo_usuario")
+	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Integer codigoTipoUsuario;
 	
 	@Column(name = "nombre_tipo_usuario")
