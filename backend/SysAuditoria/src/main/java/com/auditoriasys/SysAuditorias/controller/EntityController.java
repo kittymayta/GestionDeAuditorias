@@ -6,6 +6,7 @@ import com.auditoriasys.SysAuditorias.service.EntidadService;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,12 +47,12 @@ public class EntityController {
 
 
 	@PostMapping
-	public Entidad crear(@RequestBody EntityCreationDTO entidad) {
+	public Entidad crear(@RequestBody @Valid EntityCreationDTO entidad) {
 		return entidadsService.createEntidad(entidad);
 	}
 
 	@PostMapping("update/{id}")
-	public Entidad actualizar(@RequestBody EntityCreationDTO entidad, @PathVariable Integer id) {
+	public Entidad actualizar(@RequestBody @Valid EntityCreationDTO entidad, @PathVariable Integer id) {
 		return entidadsService.updateEntidad(entidad, id);
 	}
 	
