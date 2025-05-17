@@ -1,6 +1,7 @@
 package com.auditoriasys.SysAuditorias.controller;
 
 import com.auditoriasys.SysAuditorias.entity.Entidad;
+import com.auditoriasys.SysAuditorias.presentation.dto.EntityCreationDTO;
 import com.auditoriasys.SysAuditorias.service.EntidadService;
 import java.util.List;
 import java.util.Optional;
@@ -32,15 +33,26 @@ public class EntityController {
 		return entidadsService.findEntidadById(id);
 	}
 	
+	//@PostMapping
+	//public Entidad crear(@RequestBody Entidad Entidad) {
+	//	return entidadsService.createEntidad(Entidad);
+	//}
+
+	//@PostMapping("update/{id}")
+	//public Entidad actualizar(@RequestBody Entidad entidad, @PathVariable Integer id) {
+	//	entidad.setCodigoEntidad(id);
+	//	return entidadsService.updateEntidad(entidad);
+	//}
+
+
 	@PostMapping
-	public Entidad crear(@RequestBody Entidad Entidad) {
-		return entidadsService.createEntidad(Entidad);
+	public Entidad crear(@RequestBody EntityCreationDTO entidad) {
+		return entidadsService.createEntidad(entidad);
 	}
-	
+
 	@PostMapping("update/{id}")
-	public Entidad actualizar(@RequestBody Entidad entidad, @PathVariable Integer id) {
-		entidad.setCodigoEntidad(id);
-		return entidadsService.updateEntidad(entidad);
+	public Entidad actualizar(@RequestBody EntityCreationDTO entidad, @PathVariable Integer id) {
+		return entidadsService.updateEntidad(entidad, id);
 	}
 	
 	@DeleteMapping("delete/{id}")

@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 public class Entidad {
 	
 	@Id
-        @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.AUTO)
 	private Integer codigoEntidad;
 	
 	@Column(name = "nombre_entidad")
