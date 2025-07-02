@@ -29,12 +29,18 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
+        cache: 'maven'  # IMPORTANTE: Cachea dependencias
 
-    - name: Wait for PostgreSQL
-      run: sleep 10
+    - name: Wait for PostgreSQL (Mejorado)
+      run: |
+        for i in {1..10}; do
+          nc -z localhost 5432 && break
+          sleep 2
+        done
 
     - name: Build and test with Maven
-      run: mvn clean test
+      working-directory: GestionDeAuditorias/backend/SysAuditoria
+      run: mvn -B clean test
       env:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
         SPRING_DATASOURCE_USERNAME: test
