@@ -1,6 +1,12 @@
 name: Spring Boot CI with PostgreSQL
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'GestionDeAuditorias/backend/SysAuditoria/**' 
+  pull_request:
+    paths:
+      - 'GestionDeAuditorias/backend/SysAuditoria/**'
 
 jobs:
   build-and-test:
