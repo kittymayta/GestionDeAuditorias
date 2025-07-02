@@ -39,7 +39,7 @@ jobs:
         done
 
     - name: Build and test with Maven
-      working-directory: GestionDeAuditorias/backend/SysAuditoria
+      working-directory: backend/SysAuditoria
       run: mvn -B clean test
       env:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
