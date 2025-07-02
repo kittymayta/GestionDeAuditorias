@@ -1,9 +1,9 @@
 INSERT INTO tipo_entidad (codigo_tipo_entidad, nombre_tipo_entidad) VALUES (1, 'Tipo Entidad A'),(2, 'Tipo Entidad B');
 INSERT INTO estado_auditoria (nombre_estado_auditoria) VALUES ('Pendiente'),('En Progreso'),('Completada');
-INSERT INTO tipo_usuario (nombre_tipo_usuario) VALUES ('Administrador'),('Auditor'),('Supervisor');
+INSERT INTO tipo_usuario (nombre_tipo_usuario) VALUES ('Administrador'),('Coordinador'),('Operador'),('Lider Auditor'), ('Auditor'),('Desconocido');
 INSERT INTO normas_iso (codigo_norma_iso, nombre_norma_iso, descripcion_norma_iso, link_video, nombre_video) VALUES (1001, 'ISO 9001', 'Gestión de calidad', 'https://ejemplo.com/iso9001', 'Video ISO 9001'),(1002, 'ISO 14001', 'Gestión ambiental', 'https://ejemplo.com/iso14001', 'Video ISO 14001');
 INSERT INTO entidad (codigo_entidad, nombre_entidad, codigo_tipo_entidad) VALUES (2001, 'Entidad Principal', 1),(2002, 'Entidad Secundaria', 2);
-INSERT INTO usuario (nombre, apellido_pat, apellido_mat, dni, correo_electronico, telefono, codigo_tipo_usuario, codigo_entidad, estado_uso) VALUES ('Juan', 'Perez', 'Gomez', '12345678', 'juan@entidad.com', '999888777', 1, 2001, true),('Maria', 'Lopez', 'Sanchez', '87654321', 'maria@entidad.com', '111222333', 2, 2002, true);
+INSERT INTO usuario (nombre, apellido_pat, apellido_mat, dni, correo_electronico, telefono, codigo_tipo_usuario, codigo_entidad, estado_uso) VALUES ('Juan', 'Perez', 'Gomez', '12345678', 'jpjocar.6@gmail.com', '999888777', 4, 2001, true),('Maria', 'Lopez', 'Sanchez', '87654321', 'maria@entidad.com', '111222333', 2, 2002, true);
 INSERT INTO items (nombre_item, codigo_norma_iso, estado_uso) VALUES ('Item Calidad', 1001, true),('Item Ambiental', 1002, true);
 INSERT INTO sub_items (nombre_sub_item, descripcion_sub_item, interpretacion_sub_item, codigo_item, estado_uso) VALUES ('Subitem 1', 'Descripción subitem 1', 'Interpretación A', 1, true),('Subitem 2', 'Descripción subitem 2', 'Interpretación B', 2, true);
 INSERT INTO tipo_link (tipo_link, link, codigo_sub_item) VALUES ('Documento', 'https://doc.com/subitem1', 1),('Video', 'https://video.com/subitem2', 2);

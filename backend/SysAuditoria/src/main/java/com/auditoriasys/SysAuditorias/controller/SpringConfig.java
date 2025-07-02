@@ -10,7 +10,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class SpringConfig implements WebMvcConfigurer{
     
-	
+	/*
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -23,7 +23,7 @@ public class SpringConfig implements WebMvcConfigurer{
 
         return http.build();
     }
-
+*/
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
