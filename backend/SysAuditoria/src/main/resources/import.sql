@@ -1,0 +1,17 @@
+INSERT INTO tipo_entidad (codigo_tipo_entidad, nombre_tipo_entidad) VALUES (1, 'Tipo Entidad A'),(2, 'Tipo Entidad B');
+INSERT INTO estado_auditoria (nombre_estado_auditoria) VALUES ('Pendiente'),('En Progreso'),('Completada');
+INSERT INTO tipo_usuario (nombre_tipo_usuario) VALUES ('Administrador'),('Auditor'),('Supervisor');
+INSERT INTO normas_iso (codigo_norma_iso, nombre_norma_iso, descripcion_norma_iso, link_video, nombre_video) VALUES (1001, 'ISO 9001', 'Gestión de calidad', 'https://ejemplo.com/iso9001', 'Video ISO 9001'),(1002, 'ISO 14001', 'Gestión ambiental', 'https://ejemplo.com/iso14001', 'Video ISO 14001');
+INSERT INTO entidad (codigo_entidad, nombre_entidad, codigo_tipo_entidad) VALUES (2001, 'Entidad Principal', 1),(2002, 'Entidad Secundaria', 2);
+INSERT INTO usuario (nombre, apellido_pat, apellido_mat, dni, correo_electronico, telefono, codigo_tipo_usuario, codigo_entidad, estado_uso) VALUES ('Juan', 'Perez', 'Gomez', '12345678', 'juan@entidad.com', '999888777', 1, 2001, true),('Maria', 'Lopez', 'Sanchez', '87654321', 'maria@entidad.com', '111222333', 2, 2002, true);
+INSERT INTO items (nombre_item, codigo_norma_iso, estado_uso) VALUES ('Item Calidad', 1001, true),('Item Ambiental', 1002, true);
+INSERT INTO sub_items (nombre_sub_item, descripcion_sub_item, interpretacion_sub_item, codigo_item, estado_uso) VALUES ('Subitem 1', 'Descripción subitem 1', 'Interpretación A', 1, true),('Subitem 2', 'Descripción subitem 2', 'Interpretación B', 2, true);
+INSERT INTO tipo_link (tipo_link, link, codigo_sub_item) VALUES ('Documento', 'https://doc.com/subitem1', 1),('Video', 'https://video.com/subitem2', 2);
+INSERT INTO ejemplos (nombre_ejemplo, codigo_sub_item) VALUES ('Ejemplo Subitem 1', 1),('Ejemplo Subitem 2', 2);
+INSERT INTO documentos (nombre_documento, codigo_sub_item) VALUES ('Doc Subitem 1.pdf', 1),('Doc Subitem 2.docx', 2);
+INSERT INTO imagenes (nombre_imagen, descripcion_imagen, codigo_norma_iso) VALUES ('imagen-iso9001.jpg', 'Diagrama proceso', 1001),('imagen-iso14001.png', 'Flujo trabajo', 1002);
+INSERT INTO auditoria (nombre_auditoria, codigo_norma_iso, codigo_estado_auditoria, fecha_inicio, fecha_final, codigo_entidad, codigo_usuario) VALUES ('Auditoría Calidad 2023', 1001, 1, '2023-01-15', '2023-02-28', 2001, 1),('Auditoría Ambiental Q2', 1002, 2, '2023-04-01', '2023-06-30', 2002, 2);
+INSERT INTO procesos (nombre, descripcion, codigo_entidad, estado, comentario) VALUES ('Proceso Compras', 'Gestión de adquisiciones', 2001, 'Activo', 'Comentario proceso 1'),('Proceso Producción', 'Manufactura productos', 2002, 'Inactivo', 'Comentario proceso 2');
+INSERT INTO micro_auditoria (codigo_auditoria, fecha_auditar, codigo_sub_item, codigo_proceso, codigo_usuario) VALUES (1, '2023-01-20', 1, 1, 1),(2, '2023-04-10', 2, 2, 2);
+INSERT INTO interrogantes (nombre_interrogante, observacion_interrogante, codigo_micro_auditoria, estado) VALUES ('¿Cumple norma?', 'Revisar sección 4.1', 1, 'Pendiente'),('¿Documentación completa?', 'Verificar anexos', 2, 'Resuelto');
+INSERT INTO solicitud_auditoria (descripcion, fecha_solicitud_auditoria, estado_asignacion, codigo_usuario) VALUES ('Solicitud auditoría urgente', '2023-01-05', true, 1),('Revisión trimestral', '2023-03-15', false, 2);
