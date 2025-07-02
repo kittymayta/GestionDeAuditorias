@@ -29,7 +29,7 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        cache: 'maven'  # IMPORTANTE: Cachea dependencias
+        cache: 'maven' 
 
     - name: Wait for PostgreSQL (Mejorado)
       run: |
