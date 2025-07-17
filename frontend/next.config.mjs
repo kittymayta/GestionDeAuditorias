@@ -89,8 +89,12 @@ const nextConfig = {
         destination: '/ISOS_User/iso_items_usuario?iso=3', 
       },
       {
-        source: '/misAuditorias',
+        source: '/solicitudAuditoria',
         destination: '/Auditoria/Usuario/AuditoriaUsuario', 
+      },
+      {
+        source: '/auditoriasEntidad',
+        destination: '/Auditoria/Usuario/VerAuditoriaUsuario', 
       },
 
       //Rutas Auditor Interno

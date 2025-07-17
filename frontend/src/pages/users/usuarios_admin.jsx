@@ -1,36 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import Modal from './components/Modal';
+import {Modal} from './components/Modal';
 import ModalEditar from './components/ModalEditar';
-import ModalEliminar from './components/ModalEliminar';
-import { ButtonBlue } from "@/components/custom/button"
+import useCRUD from '@/hooks/useCrud';
+import { toast } from "sonner"
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/custom/table"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, } from "@/components/ui/tooltip"
 
-
-const getTipoUsuarioLabel = (codigoTipoUsuario) => {
-  switch (codigoTipoUsuario) {
-    case 1:
-      return 'Administrador';
-    case 2:
-      return 'Coordinador';
-    case 3:
-      return 'Operador';
-    case 4:
-      return 'Lider Auditor';
-    case 5:
-      return 'Auditor';
-    default:
-      return 'Desconocido';
-  }
-};
 const SomePage = () => {
-  const [isModalOpen, setModalOpen] = useState(false);
-  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [isModalEditarOpen, setModalEditarOpen] = useState(false);
-  const [usuarioDesactivated, setUsuarioDesactivated] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-
+  const { get, post, put, eliminar } = useCRUD();
+  const filasPorPagina = 10;
+  const [startIndex, setStartIndex]=useState(0)
+  const [endIndex, setEndIndex]=useState(filasPorPagina)
   
   // Estados para filtros
-  const [tipoUsuario, setTipoUsuario] = useState('');
+  const [tipoUsuario, setTipoUsuario] = useState("");
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [laboratorioInstituto, setLaboratorioInstituto] = useState('');
@@ -40,43 +49,38 @@ const SomePage = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [usuariosFiltrados, setUsuariosFiltrados] = useState([]);
 
-  //Estados para el mensaje de confirmacion de operacion
-  const [operacionMensaje, setOperacionMensaje] = useState('');
-  const [mensajeTipo, setMensajeTipo] = useState('');
+  // Estado para tipos usuario
+  const [tiposUsuarios, setTiposUsuarios] = useState([]);
 
-  // Función para mostrar mensaje
-  const mostrarMensaje = (mensaje, tipo) => {
-    setOperacionMensaje(mensaje);
-    setMensajeTipo(tipo);
-    setTimeout(() => {
-      setOperacionMensaje('');
-      setMensajeTipo('');
-    }, 5000);
-  };
-  
+  const fetchTiposUsuario = async()=>{
+    try {
+      const response = await get("tipoUsuarios")
+      setTiposUsuarios(response);
+    } catch (error) {
+      console.log("Error en la solicitud de tipos: ", error)
+    }
+  }
+
   const fetchUsuarios = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/usuarios');
-      if (response.ok) {
-        const data = await response.json();
-        setUsuarios(data);
-        const usuariosActivos = data.filter(usuario => usuario.estadoUso === true);
-        setUsuariosFiltrados(usuariosActivos);
-      } else {
-        console.error('Error fetching usuarios:', response.statusText);
-      }
+      const response = await get('usuarios');
+      const usuariosActivos = response.filter(usuario => usuario.estadoUso === true);
+      console.log(response);
+      setUsuarios(usuariosActivos);
+      setUsuariosFiltrados(usuariosActivos);
     } catch (error) {
-      console.error('Error en la solicitud:', error);
+      console.error('Error en la solicitud de usuarios:', error);
     }
   };
 
   useEffect(() => {
     fetchUsuarios();
+    fetchTiposUsuario();
   }, []);
 
   const aplicarFiltros = () => {
     const filtros = {
-      codigoTipoUsuario: tipoUsuario,
+      codigoTipoUsuario: tipoUsuario?.toString(),
       nombre: nombre.toLowerCase(),
       apellido: apellido.toLowerCase(),
       laboratorioInstituto: laboratorioInstituto.toLowerCase(),
@@ -102,161 +106,156 @@ const SomePage = () => {
     aplicarFiltros();
   }, [tipoUsuario, nombre, apellido, laboratorioInstituto, correo]); 
 
-  const handleOpenModal = () => {setModalOpen(true);};
-  const handleCloseModal = () => {setModalOpen(false); fetchUsuarios();};
-  const handleOpenModalEditar = (user) => {setSelectedUser(user); setModalEditarOpen(true);};
-  const handleCloseModalEditar = () => {setModalEditarOpen(false); setSelectedUser(null); fetchUsuarios();};
-  const handleOpenDeleteModal = (user) => {setUsuarioDesactivated(user); setDeleteModalOpen(true);};
-  const handleCloseDeleteModal = () => {setDeleteModalOpen(false); setUsuarioDesactivated(null);
-  };
-
-  const handleDesactivated = async () => {
-    console.log("Usuario a desactivar: ", usuarioDesactivated);
-    console.log(`http://localhost:8080/api/usuarios/update/${usuarioDesactivated.codigoUsuario}`);
-    const dataDesactivated ={
-          nombreUsuario: usuarioDesactivated.nombreUsuario,
-          apellidoPat: usuarioDesactivated.apellidoPat,
-          apellidoMat: usuarioDesactivated.apellidoMat,
-          dni: usuarioDesactivated.dni,
-          correoElectronico: usuarioDesactivated.correoElectronico,
-          telefono: usuarioDesactivated.telefono,
-          tipoUsuario: {
-            codigoTipoUsuario: usuarioDesactivated.tipoUsuario.codigoTipoUsuario,
-          },
-          entidad: (usuarioDesactivated.tipoUsuario.codigoTipoUsuario === 2 || usuarioDesactivated.tipoUsuario.codigoTipoUsuario === 3) ? {
-            codigoEntidad: usuarioDesactivated.entidad.codigoEntidad
-          } : null,
-          estadoUso: false
+  const handleDesactivated = async(codigoEliminar)=>{
+    try {
+      await post(`usuarios/${codigoEliminar}/cambiarEstado`)
+      toast.success("Usuario desactivado correctamente");
+      fetchUsuarios();
+    } catch (error) {
+      console.log("Error al desactivar el usuario: ", error);
+      toast.error("Error al desactivar el usuario");
     }
-    console.log("Datos enviados, ", dataDesactivated);
-    try { 
-        const response = await fetch(`http://localhost:8080/api/usuarios/update/${usuarioDesactivated.codigoUsuario}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(dataDesactivated),
-        });
-        if (!response.ok) {
-          mostrarMensaje('Error en la solicitud de desactivacion', 'error');
-          throw new Error('Error updating user data');
-        }
-        mostrarMensaje('Usuario desactivado correctamente', 'exito');
-        handleCloseDeleteModal();
-      } catch (error) {
-        console.error('Error al desactivaasaar:', error);
-        mostrarMensaje('Error al desactivar usuario', 'error');
-        handleCloseDeleteModal();
-      }
-      document.body.style.overflow = 'auto';
   }
 
   return (
-      <div className="max-h-full flex flex-col font-lato w-full">
-        <h1 className="text-3xl text-black text-center mt-4 font-bold">Usuarios</h1>
-        <div className="flex-grow mt-4 mx-2 border text-black border-black rounded-3xl p-4">
-          <div className="mb-4">
-            <div className="flex items-center mb-4">
-              <div className="flex-1">
-                <label className="block text-sm font-semibold mb-1">Tipo de Usuario</label>
-                <select value={tipoUsuario} onChange={(e) => setTipoUsuario(e.target.value)} className="w-w-68 border border-gray-300 rounded-lg p-2">
-                  <option value="">Seleccionar</option>
-                  <option value="1">Administrador</option>
-                  <option value="2">Coordinador</option>
-                  <option value="3">Operador</option>
-                  <option value="4">Lider Auditor</option>
-                  <option value="5">Auditor Interno</option>
-                </select>
-              </div>
-              <div className="flex-1 flex items-center justify-end">
-                <ButtonBlue className="rounded-lg w-w-68" onClick={() => handleOpenModal()}>Registrar</ButtonBlue>
-              </div>
+    <div className="max-h-full flex flex-col font-lato w-full">
+      <h1 className="text-3xl text-black text-center mt-4 font-bold">Usuarios</h1>
+      <div className="flex-grow mt-4 mx-2 border text-black border-black rounded-3xl p-4">
+        {/* Filtros */}
+        <div className="mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between mb-4 space-y-4 sm:space-y-0">
+            {/* Select de Tipo de Usuario */}
+            <div className="flex-1 w-full sm:max-w-[350px]">
+              <label className="block text-sm font-semibold mb-1">Tipo de Usuario</label>
+              <Select value={tipoUsuario} onValueChange={(value) => setTipoUsuario(value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Roles</SelectLabel>
+                    {tiposUsuarios.map((tipo) => (
+                      <SelectItem key={tipo.codigoTipoUsuario} value={tipo.codigoTipoUsuario}>
+                        {tipo.nombreTipoUsuario}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="flex space-x-4">
-              <div className="flex-1">
-                <label className="block text-sm font-semibold mb-1">Nombre</label>
-                <div className="relative">
-                  <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2 pr-10" />
-                  <img src="/images/incono_lupa.png" alt="Icono Lupa" className="absolute right-2 top-1/2 transform -translate-y-1/2 w-5 h-5" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-semibold mb-1">Apellido</label>
-                <div className="relative">
-                  <input type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2 pr-10" />
-                  <img src="/images/incono_lupa.png" alt="Icono Lupa" className="absolute right-2 top-1/2 transform -translate-y-1/2 w-5 h-5" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-semibold mb-1">Laboratorio/Instituto</label>
-                <div className="relative">
-                <input type="text" value={laboratorioInstituto} onChange={(e) => setLaboratorioInstituto(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2 pr-10" />
-                  <img src="/images/incono_lupa.png" alt="Icono Lupa" className="absolute right-2 top-1/2 transform -translate-y-1/2 w-5 h-5" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-semibold mb-1">Correo Electrónico</label>
-                <div className="relative">
-                  <input type="text" value={correo} onChange={(e) => setCorreo(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2 pr-10" />
-                  <img src="/images/incono_lupa.png" alt="Icono Lupa" className="absolute right-2 top-1/2 transform -translate-y-1/2 w-5 h-5" />
-                </div>
-              </div>
+            {/* Botón Crear */}
+            <div className="w-full sm:w-auto">
+              <Modal fetchUsuarios={fetchUsuarios} />
             </div>
           </div>
-          {operacionMensaje && (
-            <div
-              className={`mt-4 p-3 rounded ${
-                mensajeTipo === 'exito' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
-              }`}
-            >
-              {operacionMensaje}
-            </div>
-          )}
-          <div className="h-full flex flex-col p-4">
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse border border-gray-300 ">
-                <thead className="bg-custom-blue text-white font-normal">
-                  <tr>
-                    <th className="border border-gray-300 px-4 py-2 text-left font-normal">Nombre</th>
-                    <th className="border border-gray-300 px-4 py-2 text-left font-normal">Apellido</th>
-                    <th className="border border-gray-300 px-4 py-2 text-left font-normal">Correo Electrónico</th>
-                    <th className="border border-gray-300 px-4 py-2 text-left font-normal">DNI</th>
-                    <th className="border border-gray-300 px-4 py-2 text-left font-normal">Laboratorio/Instituto</th>
-                    <th className="border border-gray-300 px-4 py-2 text-left font-normal">Tipo</th>
-                    <th className="border border-gray-300 px-2 py-2 text-left font-normal">Opciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                {usuariosFiltrados.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="border border-gray-300 px-4 py-2 text-center">
-                      No hay usuarios que coincidan con los filtros.
-                    </td>
-                  </tr>
-                ) : (
-                  usuariosFiltrados.map((usuario) => (
-                    <tr key={usuario.codigoUsuario}>
-                      <td className="border border-gray-300 px-4 py-2">{usuario.nombreUsuario}</td>
-                      <td className="border border-gray-300 px-4 py-2">{`${usuario.apellidoPat} ${usuario.apellidoMat}`}</td>
-                      <td className="border border-gray-300 px-4 py-2">{usuario.correoElectronico}</td>
-                      <td className="border border-gray-300 px-4 py-2">{usuario.dni}</td>
-                      <td className="border border-gray-300 px-4 py-2">{usuario.codigoTipoUsuario === 1 || usuario.codigoTipoUsuario === 2 ? '--------' : usuario.entidad?.nombreEntidad || '--------'}</td>
-                      <td className="border border-gray-300 px-4 py-2">{getTipoUsuarioLabel(usuario.tipoUsuario.codigoTipoUsuario)}</td>
-                      <td className="border border-gray-300 px-2 py-2 justify-center space-x-2">
-                        <button className="ml-1" onClick={() => {handleOpenModalEditar(usuario)}}><img src="/images/icono_editar.png" alt="Editar" className="w-6 h-6" /></button>
-                        <button onClick={() => handleOpenDeleteModal(usuario)}><img src="/images/icono_borrar.png" alt="Eliminar" className="w-6 h-6" /></button></td>
-                    </tr>
-                  ))
-                )}
-                </tbody>
-              </table>
-            </div>
+  
+          {/* Inputs de filtros */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: "Nombre", value: nombre, onChange: setNombre },
+              { label: "Apellido", value: apellido, onChange: setApellido },
+              { label: "Laboratorio/Instituto", value: laboratorioInstituto, onChange: setLaboratorioInstituto },
+              { label: "Correo Electrónico", value: correo, onChange: setCorreo },
+            ].map(({ label, value, onChange }, idx) => (
+              <div key={idx}>
+                <label className="block text-sm font-semibold mb-1">{label}</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg p-2 pr-10"
+                  />
+                  <img
+                    src="/images/incono_lupa.png"
+                    alt="Icono Lupa"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 w-5 h-5"
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        <Modal isOpen={isModalOpen} onClose={handleCloseModal} onConfirm={() => mostrarMensaje('Usuario creado con éxito', 'exito')}  />
-        <ModalEliminar isOpen={isDeleteModalOpen} onClose={handleCloseDeleteModal} onConfirm={handleDesactivated}  />
-        <ModalEditar isOpen={isModalEditarOpen} onClose={handleCloseModalEditar} user={selectedUser} onConfirm={() => mostrarMensaje('Usuario editado con éxito', 'exito')}/>
+  
+        {/* Tabla */}
+        <div className="h-full flex flex-col p-4">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Apellido</TableHead>
+                  <TableHead>Correo Electrónico</TableHead>
+                  <TableHead>DNI</TableHead>
+                  <TableHead>Laboratorio/Instituto</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Opciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {usuariosFiltrados.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan="7" className="text-center">
+                      No hay usuarios que coincidan con los filtros.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  usuariosFiltrados.slice(startIndex, endIndex).map((usuario) => (
+                    <TableRow key={usuario.codigoUsuario}>
+                      <TableCell>{usuario.nombreUsuario}</TableCell>
+                      <TableCell>{`${usuario.apellidoPat} ${usuario.apellidoMat}`}</TableCell>
+                      <TableCell>{usuario.correoElectronico}</TableCell>
+                      <TableCell>{usuario.dni}</TableCell>
+                      <TableCell>
+                        {usuario.codigoTipoUsuario === 1 || usuario.codigoTipoUsuario === 2
+                          ? "--------"
+                          : usuario.entidad?.nombreEntidad || "--------"}
+                      </TableCell>
+                      <TableCell>{usuario.tipoUsuario.nombreTipoUsuario}</TableCell>
+                      <TableCell className="">
+                        <div className="justify-center space-x-1 items-center align-middle flex">
+                          <ModalEditar user={usuario} fetchUsuarios={fetchUsuarios} />
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger onClick={()=>{handleDesactivated(usuario.codigoUsuario)}}><img src="/images/icono_borrar.png" alt="Eliminar" className="w-6 h-6" /></TooltipTrigger>
+                              <TooltipContent><p>Eliminar Usuario</p></TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+  
+            {/* Paginación */}
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    className={startIndex === 0 ? "pointer-events-none opacity-50" : undefined}
+                    onClick={() => {
+                      setStartIndex(startIndex - filasPorPagina);
+                      setEndIndex(endIndex - filasPorPagina);
+                    }}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    className={endIndex >= usuarios.length ? "pointer-events-none opacity-50" : undefined}
+                    onClick={() => {
+                      setStartIndex(startIndex + filasPorPagina);
+                      setEndIndex(endIndex + filasPorPagina);
+                    }}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </div>
       </div>
+    </div>
   );
 };
 

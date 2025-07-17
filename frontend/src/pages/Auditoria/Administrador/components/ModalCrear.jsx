@@ -1,34 +1,176 @@
 import React, { useState, useEffect } from 'react'; 
 import { ButtonBlue } from '@/components/custom/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogClose,
+  } from "@/components/ui/dialog"
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+  } from "@/components/ui/select"
+import useCRUD from '@/hooks/useCrud';
+import { toast } from "sonner"
 
-const CrearAuditoria = ({isOpen, onClose}) =>{
+const CrearAuditoria = ({fetchAuditorias}) => {
+    const {get, post, put, eliminar}= useCRUD();
+    const [lideres, setLideres] = useState([]);
+    const [entities, setEntities] = useState([]);
+    const [fechaInicio, setFechaInicio] = useState('');
+    const [fechaFin, setFechaFin] = useState('');
+    const [selectedAuditor, setSelectedAuditor] = useState(null);
+    const [normaIso, setNormaIso] = useState(1);
+    const [selectedEntity, setSelectedEntity] = useState(null);
+    
 
-    if (!isOpen) return null;
+    useEffect(() => {
+        fetchLideres();
+        fetchEntidades();
+    }, []);
 
-    return(
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 text-black z-50">
-            <div className="bg-white rounded-lg shadow-lg w-2/6 max-w-4xl p-6 relative">
-                <button className="absolute top-2 right-2 text-black text-xl font-bold" onClick={onClose}>X</button>
-                <h1 className="text-2xl font-bold mb-4">Crear auditoria</h1>
-                <p>Laboratorio/Instituto</p>
-                <select className="border border-gray-300 rounded-lg p-2 w-full mt-4 mb-4">
-                    <option value="1">Lab</option>
-                    <option value="2">Ins</option>
-                    <option value="3">Ins</option>
-                    <option value="4">Lab</option>
-                </select>
-                <p>Auditor Lider</p>
-                <select className="border border-gray-300 rounded-lg p-2 w-full mt-4 mb-4">
-                    <option value="1">Auditor Lider 1</option>
-                    <option value="2">Auditor Lider 2</option>
-                    <option value="3">Auditor Lider 3</option>
-                    <option value="4">Auditor Lider 4</option>
-                </select>
-                <div className='w-full flex justify-end'>
-                    <ButtonBlue className="px-6">Asignar</ButtonBlue>
+    const fetchLideres = async () => {
+        try {
+            const response = await get("usuarios/tipoUsuario/4");
+            setLideres(response);
+        } catch (error) {
+            console.log("Error al obtener los lideres", error);
+        }
+    }
+    const fetchEntidades = async()=>{
+        try {
+          const response = await get("entidades");
+          setEntities(response);
+        } catch (error) {
+          console.log("Error al obtener las entidades: ", error)
+        }
+      }
+
+    const handleOptionChange = (value) => {
+        const entity = entities.find((entity) => entity.codigoEntidad === value);
+        setSelectedEntity(entity);
+    };
+    const nuevaAudi = async () => {
+        const data = {
+            nombreAuditoria: `Auditoria ${selectedEntity?.nombreEntidad}`,
+            normaIso: {
+                codigoNormaIso: normaIso,
+            },
+            codigoEstadoAuditoria: 1,
+            fechaInicio: fechaInicio,
+            fechaFinal: fechaFin,
+            codigoEntidad: selectedEntity.codigoEntidad,
+            usuario: {
+                codigoUsuario: selectedAuditor
+            }
+        }
+        try {
+            await post("auditorias/create", data)
+            toast.success("Auditoria creada exitosamente");
+            fetchAuditorias();
+        } catch (error) {
+            console.log("Error al crear la nueva auditoria:", error);
+            toast.error("Hubo un error al momento de crear la auditoria");
+        }
+    }
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <ButtonBlue className="mt-8">Crear Auditoría</ButtonBlue>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg bg-white text-black w-full max-w-[90%]">
+                <DialogHeader>
+                    <DialogTitle>Crear Auditoria</DialogTitle>
+                    <DialogDescription>
+                        En este espacio usted puede crear una nueva auditoria para alguna entidad.
+                    </DialogDescription>
+                </DialogHeader>
+                <p>Seleccione la entidad para la auditoria</p>
+                <Select onValueChange={handleOptionChange}>
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione una entidad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            <SelectLabel>Entidades</SelectLabel>
+                            {entities.map((entity) => (
+                                <SelectItem key={entity.codigoEntidad} value={entity.codigoEntidad}>
+                                    {entity.nombreEntidad}
+                                </SelectItem>
+                            ))}
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+                <p>Seleccione el auditor líder</p>
+                <Select onValueChange={(value) => setSelectedAuditor(value)}>
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione un Auditor Lider" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            <SelectLabel>Auditores Lideres</SelectLabel>
+                            {lideres.map((lider) => (
+                                <SelectItem key={lider.codigoUsuario} value={lider.codigoUsuario}>
+                                    {lider.nombreUsuario} {lider.apellidoPat} {lider.apellidoMat}
+                                </SelectItem>
+                            ))}
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+                <p>Seleccione la norma ISO</p>
+                <Select onValueChange={(value) => setNormaIso(value)}>
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione una norma ISO" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            <SelectLabel>Normas ISO</SelectLabel>
+                            <SelectItem value={1}>ISO 9001</SelectItem>
+                            <SelectItem value={2}>ISO 17025</SelectItem>
+                            <SelectItem value={3}>ISO 21001</SelectItem>
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+                <div className="flex flex-wrap sm:flex-nowrap space-y-4 sm:space-y-0 sm:space-x-4">
+                    <div className="mb-4 w-full sm:w-1/2">
+                        <label className="block mb-2">Fecha de Inicio:</label>
+                        <input
+                            type="date"
+                            value={fechaInicio}
+                            onChange={(e) => setFechaInicio(e.target.value)}
+                            className="border border-gray-300 rounded-lg p-2 w-full"
+                        />
+                    </div>
+                    <div className="mb-4 w-full sm:w-1/2">
+                        <label className="block mb-2">Fecha de Fin:</label>
+                        <input
+                            type="date"
+                            value={fechaFin}
+                            onChange={(e) => setFechaFin(e.target.value)}
+                            className="border border-gray-300 rounded-lg p-2 w-full"
+                        />
+                    </div>
                 </div>
-            </div>
-        </div>
+                <DialogFooter className="sm:justify-start">
+                    <DialogClose asChild>
+                        <ButtonBlue className="px-6" onClick={nuevaAudi}>
+                            Crear
+                        </ButtonBlue>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
-}
+};
+
 export default CrearAuditoria;

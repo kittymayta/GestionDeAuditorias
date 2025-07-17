@@ -1,11 +1,32 @@
 import { useState, useEffect } from 'react';
 import { ButtonBlue, ButtonGray } from "@/components/custom/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import useCRUD from '@/hooks/useCrud';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { toast } from "sonner"
 
-const Modal=({isOpen, onClose, onConfirm } )=> {
-  if (!isOpen) return null; 
+export function Modal({fetchUsuarios}) {
+  const { get, post} = useCRUD();
+  const [open, setOpen] = useState(false);
 
   const [role, setRole] = useState(1);
-  const [selectedEntity, setSelectedEntity] = useState(2); 
+  const [selectedEntity, setSelectedEntity] = useState(1); 
   const [entities, setEntities] = useState([]);
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
@@ -14,48 +35,33 @@ const Modal=({isOpen, onClose, onConfirm } )=> {
   const [dni, setDni] = useState('');
   const [telefono, setTelefono] = useState('');
   const [error, setError] = useState('');
+  const [tiposUsuarios, setTiposUsuarios]=useState([]);
 
-  // Prevenir scroll cuando el modal está abierto
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
+  useEffect(()=>{
+    fetchTiposUsuario();
+    fetchEntidades();
+  }, [])
+
+  const fetchTiposUsuario = async()=>{
+    try {
+      const response = await get("tipoUsuarios")
+      setTiposUsuarios(response);
+    } catch (error) {
+      console.log("Error en la solicitud de tipos: ", error)
     }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (role === '2' || role === '3') {
-      fetch('http://localhost:8080/api/entidades', {
-        method: 'GET',
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then((data) => {
-            setEntities(data);
-        })
-        .catch((error) => {
-          console.error('Error fetching entities:', error);
-        });
-    } else {
-      setEntities([]);
+  }
+  const fetchEntidades = async()=>{
+    try {
+      const response = await get("entidades");
+      setEntities(response);
+    } catch (error) {
+      console.log("Error al obtener las entidades: ", error)
     }
-  }, [role]);
+  }
 
-
-  const handleRoleChange = (event) => {
-    setRole(event.target.value);
+  const handleRoleChange = (value) => {
+    setRole(value);
     setSelectedEntity(null);
-  };
-
-  const handleOptionChange = (e) => {
-    const selectedId = e.target.value;
-    const entity = entities.find((entity) => entity.codigoEntidad === parseInt(selectedId));
-    setSelectedEntity(entity);
   };
 
   const handleSubmit = async () => {
@@ -95,7 +101,6 @@ const Modal=({isOpen, onClose, onConfirm } )=> {
       }
     }
     setError('');
-
     const userData = {
       nombreUsuario: nombre,
       apellidoPat: apellidoPat,
@@ -106,45 +111,32 @@ const Modal=({isOpen, onClose, onConfirm } )=> {
       tipoUsuario: {
         codigoTipoUsuario: parseInt(role)
       },
-      entidad: (role === '2' || role === '3') ? {
-        codigoEntidad: selectedEntity?.codigoEntidad
+      entidad: (role === 2 || role === 3) ? {
+        codigoEntidad: selectedEntity,
       } || null : null,
       estadoUso: true
     };
-  
+    console.log(userData);
     try {
-      const url = 'http://localhost:8080/api/usuarios/create';
-      const method = 'POST';
-  
-      // Primero creamos el usuario
-      const userResponse = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
-  
-      if (!userResponse.ok) {
-        throw new Error('Error al guardar los datos del usuario');
-      }
+      await post('usuarios/create', userData);
       setRole(1);
-      setSelectedEntity(2);
+      setSelectedEntity(1);
       setNombre('');
       setEmail('');
       setApellidoPat('');
       setApellidoMat('');
       setDni('');
       setTelefono('');
-      onConfirm();
-      onClose();
-    } catch (error) {
-      console.error('Error al enviar los datos:', error);
+      setOpen(false)
+      toast.success("El usuario fue registrado con éxito")
+      fetchUsuarios();
+    } catch (err) {
+      console.error('Error al enviar los datos:', err);
+      toast.error("Error al enviar los datos del usuario")
     }
   };
 
   const handleCancel = () => {
-    // Limpiar los datos al cerrar
     setRole(1);
     setSelectedEntity(2);
     setNombre('');
@@ -154,63 +146,75 @@ const Modal=({isOpen, onClose, onConfirm } )=> {
     setDni('');
     setTelefono('');
     setError('');
-    onClose(); 
+    setOpen(false)
   };
   
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 font-lato z-50">
-      <div className="bg-white w-1/2 p-8 rounded-lg shadow-lg relative">
-        <h2 className="text-2xl font-bold mb-4 text-black text-center">REGISTRAR USUARIO</h2>
-
+    <>
+    <ButtonBlue className="rounded-lg w-w-68" onClick={() => setOpen(true)}>Registrar</ButtonBlue>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger />
+      <DialogContent className="bg-white text-black max-w-full sm:max-w-3xl p-6 overflow-auto max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle>REGISTRAR USUARIO</DialogTitle>
+          <DialogDescription>
+            En este espacio usted puede crear un nuevo usuario.
+          </DialogDescription>
+        </DialogHeader>  
+        
         {/* Primer div con borde negro y esquinas redondeadas */}
         <div className="border border-black rounded-lg p-4 mb-6 text-black">
-          <h3 className="text-xl font-semibold mb-4 ">Roles</h3>
-          {/* Primera fila: Seleccionar Rol */}
-          <div className="flex space-x-4 mb-4">
-            <div className="flex-1">
+          <h3 className="text-xl font-semibold mb-4">Roles</h3>
+          <div className="flex flex-wrap gap-4 mb-4">
+            <div className="flex-1 min-w-[200px]">
               <label className="block mb-2 font-bold">Seleccionar Rol:</label>
-              <select
-                className="border border-gray-300 rounded-lg p-2 w-full"
-                value={role}
-                onChange={handleRoleChange}
-              >
-                <option value="1">Administrador</option>
-                <option value="2">Coordinador</option>
-                <option value="3">Operador</option>
-                <option value="4">Lider Auditor</option>
-                <option value="5">Auditor Interno</option>
-              </select>
+              <Select value={role} onValueChange={handleRoleChange}>
+                <SelectTrigger className="w-full max-w-[350px]">
+                  <SelectValue placeholder="Roles" />
+                </SelectTrigger>
+                <SelectContent className="w-[350px]">
+                  <SelectGroup>
+                    <SelectLabel>Roles</SelectLabel>
+                    {tiposUsuarios.map((tipo) => (
+                      <SelectItem key={tipo.codigoTipoUsuario} value={tipo.codigoTipoUsuario}>
+                        {tipo.nombreTipoUsuario}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="flex-1 text-black">
+            <div className="flex-1 min-w-[200px]">
               <label className="block font-bold mb-2">
-                {role === '2' || role === '3' ? 'Laboratorio/Instituto' : ''}
+                {role === 2 || role === 3 ? 'Laboratorio/Instituto' : ''}
               </label>
-              <select
-                value={selectedEntity?.codigoEntidad || ''}
-                onChange={handleOptionChange}
-                className="border border-gray-300 rounded-lg p-2 w-full"
-                style={{ display: role === '2' || role === '3' ? 'block' : 'none' }}
-              >
-                {/* Renderizar las opciones dinámicamente */}
-                {entities.map((entity) => (
-                  <option key={entity.id} value={entity.codigoEntidad}> {/* Usar codigoEntidad como valor */}
-                    {entity.nombreEntidad}
-                  </option>
-                ))}
-              </select>
+              {(role === 2 || role === 3) && (
+                <Select value={selectedEntity} onValueChange={(value) => setSelectedEntity(value)}>
+                  <SelectTrigger className="w-full max-w-[350px]">
+                    <SelectValue placeholder="Entidades" />
+                  </SelectTrigger>
+                  <SelectContent className="w-[350px]">
+                    <SelectGroup>
+                      <SelectLabel>Entidades</SelectLabel>
+                      {entities.map((entidad) => (
+                        <SelectItem key={entidad.codigoEntidad} value={entidad.codigoEntidad}>
+                          {entidad.nombreEntidad}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
-           </div>
+          </div>
         </div>
 
-        {/* Segundo div para almacenar más campos en dos filas */}
+        {/* Segundo div para almacenar más campos */}
         <div className="border border-black rounded-lg p-4 mb-3 text-black">
-        <div className="flex-grow">
           <h3 className="text-xl font-bold mb-4">Datos</h3>
-          
-          {/* Primera fila de campos */}
-          <div className="flex space-x-4 mb-4">
-            <div className="flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
               <label className="block mb-2 font-bold">Nombres</label>
               <input
                 type="text"
@@ -219,7 +223,7 @@ const Modal=({isOpen, onClose, onConfirm } )=> {
                 className="border border-gray-300 rounded-lg p-2 w-full"
               />
             </div>
-            <div className="flex-1">
+            <div>
               <label className="block mb-2 font-bold">Correo electronico</label>
               <input
                 type="text"
@@ -228,11 +232,7 @@ const Modal=({isOpen, onClose, onConfirm } )=> {
                 className="border border-gray-300 rounded-lg p-2 w-full"
               />
             </div>
-          </div>
-
-          {/* Segunda fila de campos */}
-          <div className="flex space-x-4 mb-4">
-            <div className="flex-1">
+            <div>
               <label className="block mb-2 font-bold">Apellido Paterno</label>
               <input
                 type="text"
@@ -241,20 +241,16 @@ const Modal=({isOpen, onClose, onConfirm } )=> {
                 className="border border-gray-300 rounded-lg p-2 w-full"
               />
             </div>
-            <div className="flex-1">
+            <div>
               <label className="block mb-2 font-bold">Apellido Materno</label>
-              <input 
+              <input
                 type="text"
                 value={apellidoMat}
                 onChange={(e) => setApellidoMat(e.target.value)}
                 className="border border-gray-300 rounded-lg p-2 w-full"
               />
             </div>
-          </div>
-
-          {/* Tercera fila de campos */}
-          <div className="flex space-x-4 mb-4">
-            <div className="flex-1">
+            <div>
               <label className="block mb-2 font-bold">DNI</label>
               <input
                 type="text"
@@ -263,26 +259,30 @@ const Modal=({isOpen, onClose, onConfirm } )=> {
                 className="border border-gray-300 rounded-lg p-2 w-full"
               />
             </div>
-            <div className="flex-1">
+            <div>
               <label className="block mb-2 font-bold">Telefono</label>
-              <input 
+              <input
                 type="text"
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
                 className="border border-gray-300 rounded-lg p-2 w-full"
-                />
+              />
             </div>
           </div>
+        </div>
+
+        {error && (
+          <div className="text-red-600 mb-6 justify-center w-full items-center text-center">{error}</div>
+        )}
+
+        <DialogFooter>
+          <div className="flex justify-center space-x-12 w-full">
+            <ButtonGray className="px-16" onClick={handleCancel}>Cancelar</ButtonGray>
+            <ButtonBlue className="px-16" onClick={handleSubmit}>Guardar</ButtonBlue>
           </div>
-        </div>
-        {error && <div className="text-red-600 mb-6 justify-center w-full items-center text-center">{error}</div>}
-        {/* Botones de Guardar y Cancelar */}
-        <div className="flex justify-center mt-4 space-x-12">
-          <ButtonGray className="px-16" onClick={handleCancel}>Cancelar</ButtonGray>
-          <ButtonBlue className="px-16" onClick={handleSubmit}>Guardar</ButtonBlue>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
   }
-  export default Modal;

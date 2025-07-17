@@ -1,64 +1,180 @@
 import React, { useState, useEffect } from 'react'; 
 import ModalCrear from '../Administrador/components/ModalCrear';
+import useCRUD from '@/hooks/useCrud';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/custom/table"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+
+const getIso = (codigo) => {
+    if(codigo==1){
+        return(9001);
+    } else if(codigo==2){
+        return(17025);
+    } else if(codigo==3){
+        return(21001);
+    }
+}
+const getEstado = (estado) => {
+    if(estado==1){
+        return(<div className="bg-yellow-300 border rounded-full flex text-center justify-center text-white">Iniciada</div>);
+    } else if(estado==2){
+        return(<div className="bg-green-500 border rounded-full flex text-center justify-center text-white px-1">En Proceso</div>);
+    } else{
+        return(<div className="bg-red-700 border rounded-full flex text-center justify-center text-white">Finalizada</div>);
+    }
+}
 
 const Auditoria = () => {
-    const [isModalCrearOpen, setIsModalCrearOpen] = useState(false);
+    const { get, post, put, eliminar } = useCRUD();
+    const filasPorPagina = 10;
+    const [startIndex, setStartIndex]=useState(0)
+    const [endIndex, setEndIndex]=useState(filasPorPagina)
 
-    const openModalCrear = () => setIsModalCrearOpen(true);
-    const closeModalCrear = () => setIsModalCrearOpen(false);
+    const [auditorias, setAuditorias] = useState([]);
+    const [auditoriasFiltradas, setAuditoriasFiltradas] = useState([]);
+    const [selectedState, setSelectedState] = useState(0);
+
+    const fetchAuditorias = async()=>{
+        try {
+            const response = await get("auditorias")
+            console.log(response);
+            setAuditorias(response);
+            setAuditoriasFiltradas(response);
+        } catch (error) {
+            console.log("Error al obtener las auditorias: ", error);
+        }
+    }
+    useEffect(() => {
+        fetchAuditorias();
+    }, []);
+
+    useEffect(() => {
+        if(selectedState==0){
+          setAuditoriasFiltradas(auditorias);
+        } else if(selectedState ==1) {
+            setAuditoriasFiltradas(auditorias.filter((auditoria) => auditoria.codigoEstadoAuditoria === 1));
+        } else if(selectedState ==2) {
+            setAuditoriasFiltradas(auditorias.filter((auditoria) => auditoria.codigoEstadoAuditoria === 2));
+        } else {
+            setAuditoriasFiltradas(auditorias.filter((auditoria) => auditoria.codigoEstadoAuditoria === 3));
+        }
+      }, [selectedState]);
+
 
     return (
             <div className="min-h-screen flex flex-col font-lato w-full">
-                <h1 className="text-3xl text-black mt-4 font-bold ml-7">Solicitud de Auditorías</h1>
-                <div className="flex-grow mt-4 mx-4 border text-black border-black rounded-3xl p-4">
-                        <div className="w-full flex flex-auto">
-                            <h2 className="text-2xl text-black mt-2 font-bold ml-7 mr-80">Auditorías</h2>
-                            <button 
-                                className="w-w-68 bg-custom-blue text-white rounded-lg py-2 px-4 mr-4 ml-96"
-                                onClick={openModalCrear}
-                            >
-                                Crear Auditoría
-                            </button>
+                <h1 className="text-3xl text-black mt-4 font-bold ml-7">Auditorías</h1>
+                <div className="flex-grow mt-4 mx-2 border text-black border-black rounded-3xl p-4">
+                        <div className="w-full flex flex-wrap gap-4">
+                            <div className="flex-1 text-black w-full md:w-1/3">
+                                <label className="block font-bold mb-2">
+                                    Estado Auditorias
+                                </label>
+                                <Select value={selectedState} onValueChange={(value)=>setSelectedState(value)}>
+                                    <SelectTrigger className="w-full md:w-[470px]">
+                                        <SelectValue placeholder="Seleccione un estado de auditoria" />
+                                    </SelectTrigger>
+                                    <SelectContent className="w-full md:w-[470px]">
+                                        <SelectGroup>
+                                            <SelectLabel>Estados</SelectLabel>
+                                            <SelectItem value={0}>Todos</SelectItem>
+                                            <SelectItem value={1}>Iniciado</SelectItem>
+                                            <SelectItem value={2}>En Proceso</SelectItem>
+                                            <SelectItem value={3}>Finalizado</SelectItem>
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <ModalCrear fetchAuditorias={fetchAuditorias}/>
                         </div>
-                        {/* Segunda tabla */}
-                        <div className="h-1/2 overflow-y-auto mt-4">
-                            <table className="min-w-full border-collapse border border-gray-300">
-                                <thead className="bg-custom-blue text-white font-normal">
-                                    <tr>
-                                        <th className="border border-gray-300 px-4 py-2 text-left font-normal w-2/12">N°</th>
-                                        <th className="border border-gray-300 px-4 py-2 text-left font-normal">Nombre Auditoria</th>
-                                        <th className="border border-gray-300 px-4 py-2 text-left font-normal">Lab/Ins</th>
-                                        <th className="border border-gray-300 px-4 py-2 text-left font-normal">Auditor</th>
-                                        <th className="border border-gray-300 px-4 py-2 text-left font-normal w-2/12">Nombre</th>
-                                        <th className="border border-gray-300 px-4 py-2 text-left font-normal w-2/12">Estado Auditor</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-gray-300">
-                                    <tr>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">987654321</td>
-                                        <td className="border border-gray-300 px-4 py-2">Auditoria de procesos</td>
-                                        <td className="border border-gray-300 px-4 py-2">Instituto NEXUS de la UNSA</td>
-                                        <td className="border border-gray-300 px-4 py-2">Juan Gonzales</td>
-                                        <td className="border border-gray-300 px-4 py-2">Ernesto Aguirre</td>
-                                        <td className="border border-gray-300 px-4 py-2">
-                                            <div className="bg-yellow-300 border rounded-full flex text-center justify-center text-white">Iniciada</div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">987654321</td>
-                                        <td className="border border-gray-300 px-4 py-2">Auditoria de procesos</td>
-                                        <td className="border border-gray-300 px-4 py-2">Instituto NEXUS de la UNSA</td>
-                                        <td className="border border-gray-300 px-4 py-2">Juan Gonzales</td>
-                                        <td className="border border-gray-300 px-4 py-2">Ernesto Aguirre</td>
-                                        <td className="border border-gray-300 px-4 py-2">
-                                            <div className="bg-green-800 border rounded-full flex text-center justify-center text-white">En Proceso</div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div className="overflow-y-auto mt-4 h-full">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>N°</TableHead>
+                                    <TableHead>Nombre Auditoria</TableHead>
+                                    <TableHead>Codigo Lab/Ins</TableHead>
+                                    <TableHead>Auditor Lider</TableHead>
+                                    <TableHead>ISO</TableHead>
+                                    <TableHead>Estado</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {auditorias.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan="6" className="text-center">No hay auditorias.</TableCell>
+                                    </TableRow>
+                                    ) : (
+                                    auditoriasFiltradas.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan="6" className="text-center">No hay auditorias que coincidan con los filtros.</TableCell>
+                                        </TableRow>
+                                        ) : (
+                                        auditoriasFiltradas.slice(startIndex, endIndex).map((auditoria) => (
+                                            <TableRow key={auditoria.codigoAuditoria}>
+                                                <TableCell>{auditoria.codigoAuditoria}</TableCell>
+                                                <TableCell className="max-w-[300px] truncate">{auditoria.nombreAuditoria}</TableCell>
+                                                <TableCell>{auditoria.codigoEntidad}</TableCell>
+                                                <TableCell>{auditoria.usuario.nombreUsuario} {auditoria.usuario.apellidoPat} {auditoria.usuario.apellidoMat}</TableCell>
+                                                <TableCell>{auditoria.normaIso.nombreNormaIso}</TableCell>
+                                                <TableCell>{getEstado(auditoria.codigoEstadoAuditoria)}</TableCell>
+                                            </TableRow>
+                                        )))
+                                    )}
+                            </TableBody>
+                        </Table>
+                        <Pagination>
+                            <PaginationContent>
+                            <PaginationItem>
+                                <PaginationPrevious 
+                                className={
+                                    startIndex === 0 ? "pointer-events-none opacity-50" : undefined
+                                }
+                                onClick={()=>{
+                                    setStartIndex(startIndex-filasPorPagina);
+                                    setEndIndex(endIndex-filasPorPagina);
+                                }}
+                                />
+                            </PaginationItem>
+                            <PaginationItem>
+                                <PaginationNext 
+                                className={
+                                    endIndex >= auditoriasFiltradas.length ? "pointer-events-none opacity-50" : undefined
+                                }
+                                onClick={()=>{
+                                    setStartIndex(startIndex+filasPorPagina);
+                                    setEndIndex(endIndex+filasPorPagina);
+                                }}
+                                />
+                            </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
                     </div>
                 </div>
-                <ModalCrear isOpen={isModalCrearOpen} onClose={closeModalCrear} />
             </div>
     );
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/custom/sidebar";
+import { Toaster } from "@/components/ui/sonner"
 
 
 export default function Layout({ children }) {
@@ -14,6 +15,7 @@ export default function Layout({ children }) {
           <SidebarTrigger onClick={() => setOpen(!open)} />
           {children}
         </main>
+        <Toaster richColors />
       </div>
     </SidebarProvider>
   );

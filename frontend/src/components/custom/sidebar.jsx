@@ -39,6 +39,7 @@ import {
     const [open, setOpen] = React.useState(opened)
 
     const logOut =()=> {
+      document.cookie = "usuario=; path=/; max-age=0; secure; SameSite=Strict;";
       localStorage.removeItem('usuario');
       router.push("/login");
     }
@@ -101,6 +102,7 @@ import {
       if (typeof window !== "undefined") {
         const storedUser = JSON.parse(localStorage.getItem("usuario"));
         setUsuarioStorage(storedUser);
+        console.log(usuarioStorage);
       }
     }, []);
 
@@ -119,49 +121,71 @@ import {
                     <SidebarMenuButton><Home/><span>Home</span></SidebarMenuButton>
                   </a>
                 </SidebarMenuItem>
-                <SidebarMenuItem className="ml-2">
-                  <a href="/usuarios">
-                    <SidebarMenuButton><Users/><span>Usuarios</span></SidebarMenuButton>
-                  </a>
-                </SidebarMenuItem>
-                <SidebarMenuItem className="ml-2">
-                  <a href="/misAuditorias">
-                    <SidebarMenuButton><CircleUserRound/><span>Auditoria Usuario</span></SidebarMenuButton>
-                  </a>
-                </SidebarMenuItem>
-                <SidebarMenuItem className="ml-2">
-                  <a href="/Auditorias">
-                    <SidebarMenuButton><CircleUserRound/><span>Auditorias Administrador</span></SidebarMenuButton>
-                  </a>
-                </SidebarMenuItem>
-                <SidebarMenuItem className="ml-2">
-                  <a href="/SolicitudesAuditoria">
-                    <SidebarMenuButton><CircleUserRound/><span>Solicitudes Auditorias Administr</span></SidebarMenuButton>
-                  </a>
-                </SidebarMenuItem>
-                <SidebarMenuItem className="ml-2">
-                  <a href="/ProcesarAuditorias">
-                    <SidebarMenuButton><CircleUserRound/><span>Auditoria Auditor Lider</span></SidebarMenuButton>
-                  </a>
-                </SidebarMenuItem>
-                <SidebarMenuItem className="ml-2">
-                  <a href="/Auditar">
-                    <SidebarMenuButton><CircleUserRound/><span>Auditoria Auditor Interno</span></SidebarMenuButton>
-                  </a>
-                </SidebarMenuItem>
-                <SidebarMenuItem className="ml-2">
-                  <a href="/procesos">
-                    <SidebarMenuButton><Factory /><span>Procesos Administrador</span></SidebarMenuButton>
-                  </a>
-                </SidebarMenuItem>
-                <SidebarMenuItem className="ml-2">
-                  <a href="/nuestrosProcesos">
-                    <SidebarMenuButton><Factory /><span>Procesos Coordinador</span></SidebarMenuButton>
-                  </a>
-                </SidebarMenuItem>
-
-                {/* Documentacion Usuario */}
-                <Collapsible defaultClose className="group/collapsible">
+                {usuarioStorage?.tipoUsuario.codigoTipoUsuario === 1 && (
+                  <SidebarMenuItem className="ml-2">
+                      <a href="/usuarios">
+                          <SidebarMenuButton><Users/><span>Usuarios</span></SidebarMenuButton>
+                      </a>
+                  </SidebarMenuItem>
+                )}
+                {usuarioStorage?.tipoUsuario.codigoTipoUsuario === 2 && (
+                  <SidebarMenuItem className="ml-2">
+                    <a href="/solicitudAuditoria">
+                      <SidebarMenuButton><CircleUserRound/><span>Solicitud Auditoria</span></SidebarMenuButton>
+                    </a>
+                  </SidebarMenuItem>
+                )}
+                {usuarioStorage?.tipoUsuario.codigoTipoUsuario === 1 && (
+                  <SidebarMenuItem className="ml-2">
+                    <a href="/Auditorias">
+                      <SidebarMenuButton><CircleUserRound/><span>Auditorias</span></SidebarMenuButton>
+                    </a>
+                  </SidebarMenuItem>
+                )}
+                {usuarioStorage?.tipoUsuario.codigoTipoUsuario === 1 && (
+                  <SidebarMenuItem className="ml-2">
+                    <a href="/SolicitudesAuditoria">
+                      <SidebarMenuButton><CircleUserRound/><span>Solicitudes Auditorias</span></SidebarMenuButton>
+                    </a>
+                  </SidebarMenuItem>
+                )}
+                {usuarioStorage?.tipoUsuario.codigoTipoUsuario === 4 && (
+                  <SidebarMenuItem className="ml-2">
+                    <a href="/ProcesarAuditorias">
+                      <SidebarMenuButton><CircleUserRound/><span>Gestionar Auditorias</span></SidebarMenuButton>
+                    </a>
+                  </SidebarMenuItem>
+                )}
+                {usuarioStorage?.tipoUsuario.codigoTipoUsuario === 5 && (
+                  <SidebarMenuItem className="ml-2">
+                    <a href="/Auditar">
+                      <SidebarMenuButton><CircleUserRound/><span>Mis Auditorias</span></SidebarMenuButton>
+                    </a>
+                  </SidebarMenuItem>
+                )}
+                {usuarioStorage?.tipoUsuario.codigoTipoUsuario === 2 || usuarioStorage?.tipoUsuario.codigoTipoUsuario === 3 ? (
+                  <SidebarMenuItem className="ml-2">
+                    <a href="/auditoriasEntidad">
+                      <SidebarMenuButton><CircleUserRound/><span>Auditorias de mi Entidad</span></SidebarMenuButton>
+                    </a>
+                  </SidebarMenuItem>
+                ) : null}
+                {usuarioStorage?.tipoUsuario.codigoTipoUsuario === 1 && (
+                  <SidebarMenuItem className="ml-2">
+                    <a href="/procesos">
+                      <SidebarMenuButton><Factory /><span>Procesos de Entidades</span></SidebarMenuButton>
+                    </a>
+                  </SidebarMenuItem>
+                )}
+                {usuarioStorage?.tipoUsuario.codigoTipoUsuario === 2 || usuarioStorage?.tipoUsuario.codigoTipoUsuario === 3 ? (
+                  <SidebarMenuItem className="ml-2">
+                    <a href="/nuestrosProcesos">
+                      <SidebarMenuButton><Factory /><span>Procesos de mi Entidad</span></SidebarMenuButton>
+                    </a>
+                  </SidebarMenuItem>
+                ) : null}
+                {usuarioStorage?.tipoUsuario.codigoTipoUsuario === 2 || usuarioStorage?.tipoUsuario.codigoTipoUsuario === 3 || usuarioStorage?.tipoUsuario.codigoTipoUsuario === 4 || usuarioStorage?.tipoUsuario.codigoTipoUsuario === 5 ? (
+                <Collapsible className="group/collapsible">
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton>
@@ -169,7 +193,7 @@ import {
                           <SidebarMenuButton asChild>
                             <div className="w-full">
                               <Book/>
-                              <span>Documentacion Usuario</span>
+                              <span>Documentacion</span>
                               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180"></ChevronDown>
                             </div>
                           </SidebarMenuButton>
@@ -180,7 +204,7 @@ import {
                       <SidebarMenuSub>
                         <SidebarMenuSubItem>
                           {/* ISO 9001 */}
-                          <Collapsible defaultClose className="group/collapsible1">
+                          <Collapsible className="group/collapsible1">
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton>
                                   <SidebarMenuButton asChild>
@@ -213,7 +237,7 @@ import {
                           </Collapsible>
 
                           {/* ISO 17025 */}
-                          <Collapsible defaultClose className="group/collapsible2">
+                          <Collapsible className="group/collapsible2">
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton>
                                   <SidebarMenuButton asChild>
@@ -246,7 +270,7 @@ import {
                           </Collapsible>
 
                           {/* ISO 21001 */}
-                          <Collapsible defaultClose className="group/collapsible3">
+                          <Collapsible className="group/collapsible3">
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton>
                                   <SidebarMenuButton asChild>
@@ -282,9 +306,9 @@ import {
                     </CollapsibleContent>
                   </SidebarMenuItem>
                 </Collapsible>
-
-                {/* Documentación Administrador */}
-                <Collapsible defaultClose className="group/collapsible">
+                ) : null}
+                {usuarioStorage?.tipoUsuario.codigoTipoUsuario === 1 && (
+                <Collapsible className="group/collapsible">
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton>
@@ -292,7 +316,7 @@ import {
                           <SidebarMenuButton asChild>
                             <div className="w-full">
                               <Book/>
-                              <span>Documentacion Administrador</span>
+                              <span>Documentacion</span>
                               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180"></ChevronDown>
                             </div>
                           </SidebarMenuButton>
@@ -303,7 +327,7 @@ import {
                       <SidebarMenuSub>
                         <SidebarMenuSubItem>
                           {/* ISO 9001 */}
-                          <Collapsible defaultClose className="group/collapsible1">
+                          <Collapsible className="group/collapsible1">
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton>
                                   <SidebarMenuButton asChild>
@@ -336,7 +360,7 @@ import {
                           </Collapsible>
 
                           {/* ISO 17025 */}
-                          <Collapsible defaultClose className="group/collapsible2">
+                          <Collapsible className="group/collapsible2">
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton>
                                   <SidebarMenuButton asChild>
@@ -405,6 +429,7 @@ import {
                     </CollapsibleContent>
                   </SidebarMenuItem>
                 </Collapsible>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

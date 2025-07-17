@@ -19,25 +19,28 @@ import {
     PaginationNext,
     PaginationPrevious,
   } from "@/components/ui/pagination"
+import ModalObservaciones from "./components/VerObservaciones";
 
 
-const getEstado = (condicional) => {
-    if(condicional==true){
-        return(<div className="bg-green-500 border rounded-full flex text-center justify-center text-white px-5">Procesada</div>);
-    } else {
-        return(<div className="bg-yellow-300 border rounded-full flex text-center justify-center text-white px-5">En Espera</div>)
+  const getEstado = (estado) => {
+    if(estado==1){
+        return(<div className="bg-yellow-300 border rounded-full flex text-center justify-center text-white">Iniciada</div>);
+    } else if(estado==2){
+        return(<div className="bg-green-500 border rounded-full flex text-center justify-center text-white px-1">En Proceso</div>);
+    } else{
+        return(<div className="bg-red-700 border rounded-full flex text-center justify-center text-white">Finalizada</div>);
     }
 }
 
 
-const Auditoria = () => {
+const VerAuditoria = () => {
     const { get, post, put, eliminar } = useCRUD();
     const filasPorPagina = 10;
     const [startIndex, setStartIndex]=useState(0)
     const [endIndex, setEndIndex]=useState(filasPorPagina)
     const [usuario, setUsuario] = useState(null);
-    const [solicitudes, setSolicitudes] = useState([]);
-    const [solicitudesFiltradas, setSolicitudesFiltradas] = useState([]);
+    const [auditorias, setAuditorias] = useState([]);
+    const [auditoriasFiltradas, setAuditoriasFiltradas] = useState([]);
 
 
     useEffect(() => {
@@ -48,58 +51,64 @@ const Auditoria = () => {
         }
     }, []);
 
-    const fetchSolicitudes = async () => {
+    const fetchAuditorias = async () => {
         try {
-            const response = await get(`solicitudAuditorias/usuario/${usuario.codigoUsuario}`)
-            setSolicitudes(response);
-            setSolicitudesFiltradas(response);
+            const response = await get(`auditorias`)
+            const filter = response.filter((auditoria)=>(auditoria.codigoEntidad == usuario.entidad.codigoEntidad));
+            setAuditorias(filter);
+            setAuditoriasFiltradas(filter);
         } catch (error) {
-            console.log("Error al obtener las solicitudes", error)
+            console.log("Error al obtener las auditorias", error)
         }
     }
 
     useEffect(() => {
         if (usuario && usuario.codigoUsuario) {
-            fetchSolicitudes();
+            fetchAuditorias();
         }
     }, [usuario]);
 
     return (
         <div className="w-full">
             <div className="flex items-center justify-between mt-4">
-                <h1 className="text-3xl text-black font-bold ml-4">Pedir Una Auditoría</h1>
-                <NuevaSolicitud className="w-68" user={usuario} fetchSolicitudes={fetchSolicitudes}/>
+                <h1 className="text-3xl text-black font-bold ml-4">Auditorias de {usuario?.entidad.nombreEntidad}</h1>
             </div>
             <div className="flex-grow mt-6 mx-2 border text-black border-black rounded-3xl px-4 pb-4 mb-4 min-h-full"> 
                 <div className="overflow-x-auto mt-6">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Número</TableHead>
-                                <TableHead>Nombre</TableHead>
-                                <TableHead>Laboratorio/Instituto</TableHead>
-                                <TableHead>Descripcion</TableHead>
+                                <TableHead>N°</TableHead>
+                                <TableHead>Nombre Auditoria</TableHead>
+                                <TableHead>Auditor Encargado</TableHead>
+                                <TableHead>ISO</TableHead>
                                 <TableHead>Estado</TableHead>
+                                <TableHead>Obciones</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {solicitudes.length === 0 ? (
+                            {auditorias.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan="6" className="text-center">No hay auditorias.</TableCell>
                                 </TableRow>
                                 ) : (
-                                solicitudesFiltradas.length === 0 ? (
+                                auditoriasFiltradas.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan="6" className="text-center">No hay auditorias que coincidan con los filtros.</TableCell>
                                     </TableRow>
                                     ) : (
-                                    solicitudesFiltradas.slice(startIndex, endIndex).map((solicitud) => (
+                                    auditoriasFiltradas.slice(startIndex, endIndex).map((auditoria) => (
                                         <TableRow>
-                                            <TableCell>{solicitud.codigoSolicitudAuditoria}</TableCell>
-                                            <TableCell>{solicitud.usuario.nombreUsuario} {solicitud.usuario.apellidoPat} {solicitud.usuario.apellidoMat}</TableCell>
-                                            <TableCell>{solicitud.usuario.entidad.nombreEntidad}</TableCell>
-                                            <TableCell>{solicitud.descripcion}</TableCell>
-                                            <TableCell>{getEstado(solicitud.estadoAsignacion)}</TableCell>
+                                            <TableCell>{auditoria.codigoAuditoria}</TableCell>
+                                            <TableCell className="max-w-[300px]">{auditoria.nombreAuditoria}</TableCell>
+                                            <TableCell>{auditoria.usuario.nombreUsuario} {auditoria.usuario.apellidoPat} {auditoria.usuario.apellidoMat}</TableCell>
+                                            <TableCell>{auditoria.normaIso.nombreNormaIso}</TableCell>
+                                            <TableCell>{getEstado(auditoria.codigoEstadoAuditoria)}</TableCell>
+                                            <TableCell>
+                                                {auditoria.codigoEstadoAuditoria === 2 || auditoria.codigoEstadoAuditoria === 3 ? (
+                                                    <ModalObservaciones auditoria={auditoria} />
+                                                ) : null}
+                                            </TableCell>
                                         </TableRow>
                                     )))
                                 )
@@ -122,7 +131,7 @@ const Auditoria = () => {
                             <PaginationItem>
                                 <PaginationNext 
                                 className={
-                                    endIndex >= solicitudesFiltradas.length ? "pointer-events-none opacity-50" : undefined
+                                    endIndex >= auditoriasFiltradas.length ? "pointer-events-none opacity-50" : undefined
                                 }
                                 onClick={()=>{
                                     setStartIndex(startIndex+filasPorPagina);
@@ -138,4 +147,4 @@ const Auditoria = () => {
     );
 };
 
-export default Auditoria;
+export default VerAuditoria;

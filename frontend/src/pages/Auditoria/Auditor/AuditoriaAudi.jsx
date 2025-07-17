@@ -1,76 +1,161 @@
 import React, { useState, useEffect } from 'react'; 
-import ModalAudi from "../Auditor/components/ModalAudi";
 import ModalGestion from "./components/ModalGestion";
+import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, } from "@/components/custom/table"
+import {Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, } from "@/components/ui/pagination"
+import useCRUD from '@/hooks/useCrud';
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+  } from '@/components/ui/select';
+
+
+const getEstado = (estado) => {
+    if(estado==1){
+        return(<div className="bg-yellow-300 border rounded-full flex text-center justify-center text-white">Iniciada</div>);
+    } else if(estado==2){
+        return(<div className="bg-green-800 border rounded-full flex text-center justify-center text-white px-1">En Proceso</div>);
+    } else{
+        return(<div className="bg-red-700 border rounded-full flex text-center justify-center text-white">Finalizada</div>);
+    }
+}
 
 const Auditoria = () =>{
-    const [isModalAudiOpen, setIsModalAudiOpen] = useState(false);
-    const [isModalGesOpen, setIsModalGesOpen] = useState(false);
+    const { get, post, put, eliminar } = useCRUD();
+    const filasPorPagina = 10;
+    const [startIndex, setStartIndex]=useState(0)
+    const [endIndex, setEndIndex]=useState(filasPorPagina)
+    const [auditorias, setAuditorias]=useState([]);
+    const [auditoriasFiltradas, setAuditoriasFiltradas]=useState([]);
+    const [selectedState, setSelectedState] = useState("");
+    const [usuario, setUsuario]= useState([]);
 
-    const openModalAudi = () => setIsModalAudiOpen(true);
-    const closeModalAudi = () => setIsModalAudiOpen(false);
-    const openModalGes = () => setIsModalGesOpen(true);
-    const closeModalGes = () => setIsModalGesOpen(false);
+    useEffect(() => {
+        const usuarioStorage = localStorage.getItem("usuario");
+        const usuarioParsed = JSON.parse(usuarioStorage);
+        setUsuario(usuarioParsed);
+      }, []);
+    useEffect(() => {
+        fetchAuditorias();
+    }, [usuario]);
+
+    const fetchAuditorias = async() =>{
+        try {
+            const response = await get(`auditorias/auditorLider/${usuario.codigoUsuario}`)
+            console.log(response);
+            setAuditorias(response);
+            setAuditoriasFiltradas(response);
+        } catch (error) {
+            console.log("Error al obtener las auditorias", error);
+        }
+    }
+
+    useEffect(() => {
+        if(selectedState==0){
+          setAuditoriasFiltradas(auditorias);
+        } else if(selectedState ==1) {
+            setAuditoriasFiltradas(auditorias.filter((auditoria) => auditoria.codigoEstadoAuditoria === 1));
+        } else if(selectedState ==2) {
+            setAuditoriasFiltradas(auditorias.filter((auditoria) => auditoria.codigoEstadoAuditoria === 2));
+        } else {
+            setAuditoriasFiltradas(auditorias.filter((auditoria) => auditoria.codigoEstadoAuditoria === 3));
+        }
+      }, [selectedState]);
 
     return(
             <div className="min-h-screen flex flex-col font-lato w-full">
                 <h1 className="text-3xl text-black mt-4 font-bold ml-7">Lista de Auditorias</h1>
-                    <div className="overflow-x-auto mt-5 mx-6 text-black">
-                        <table className="w-full border-collapse border border-gray-300">
-                            <thead className="bg-custom-blue text-white font-normal">
-                            <tr>
-                                <th className="border border-gray-300 px-4 py-2 text-left font-normal w-2/12">N°</th>
-                                <th className="border border-gray-300 px-4 py-2 text-left font-normal">Nombre Auditoria</th>
-                                <th className="border border-gray-300 px-4 py-2 text-left font-normal">Nombre</th>
-                                <th className="border border-gray-300 px-4 py-2 text-left font-normal">Lab/Ins</th>
-                                <th className="border border-gray-300 px-4 py-2 text-left font-normal">Estado</th>
-                                <th className="border border-gray-300 px-4 py-2 text-left font-normal w-2/12">Opciones</th>
-                            </tr>
-                            </thead>
-                            <tbody className="bg-gray-300">
-                                <tr>
-                                    <td className="border border-gray-300 px-4 py-2 text-center">123456789</td>
-                                    <td className="border border-gray-300 px-4 py-2">Auditoria</td>
-                                    <td className="border border-gray-300 px-4 py-2">Alfredo Aguirre</td>
-                                    <td className="border border-gray-300 px-4 py-2">Instituto de Materiales</td>
-                                    <td className="border border-gray-300 px-4 py-2">
-                                        <div className="bg-yellow-300 border rounded-full flex text-center justify-center text-white">Iniciada</div>
-                                    </td>
-                                    <td className="border border-gray-300 px-4 py-2 text-center flex items-center justify-center space-x-3">
-                                        <button onClick={openModalAudi}><img src="/images/incono_lupa.png" alt="Asignar Auditor" className="w-6 h-6" /></button>
-                                        <button onClick={openModalGes}><img src="/images/icon-interroga.png" alt="Procesos" className="w-6 h-6" /></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td className="border border-gray-300 px-4 py-2 text-center">123456789</td>
-                                    <td className="border border-gray-300 px-4 py-2">Auditoria</td>
-                                    <td className="border border-gray-300 px-4 py-2">Alfredo Aguirre</td>
-                                    <td className="border border-gray-300 px-4 py-2">Instituto de Materiales</td>
-                                    <td className="border border-gray-300 px-4 py-2">
-                                        <div className="bg-yellow-300 border rounded-full flex text-center justify-center text-white">Iniciada</div>
-                                    </td>
-                                    <td className="border border-gray-300 px-4 py-2 text-center flex items-center justify-center space-x-3">
-                                        <button onClick={openModalAudi}><img src="/images/incono_lupa.png" alt="Asignar Auditor" className="w-6 h-6" /></button>
-                                        <button onClick={openModalGes}><img src="/images/icon-interroga.png" alt="Procesos" className="w-6 h-6" /></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td className="border border-gray-300 px-4 py-2 text-center">123456789</td>
-                                    <td className="border border-gray-300 px-4 py-2">Auditoria</td>
-                                    <td className="border border-gray-300 px-4 py-2">Alfredo Aguirre</td>
-                                    <td className="border border-gray-300 px-4 py-2">Instituto de Materiales</td>
-                                    <td className="border border-gray-300 px-4 py-2">
-                                        <div className="bg-yellow-300 border rounded-full flex text-center justify-center text-white">Iniciada</div>
-                                    </td>
-                                    <td className="border border-gray-300 px-4 py-2 text-center flex items-center justify-center space-x-3">
-                                        <button onClick={openModalAudi}><img src="/images/incono_lupa.png" alt="Asignar Auditor" className="w-6 h-6" /></button>
-                                        <button onClick={openModalGes}><img src="/images/icon-interroga.png" alt="Procesos" className="w-6 h-6" /></button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div className="flex-grow mt-4 mx-4 border text-black border-black rounded-3xl p-4 pt-6">
+                            <label className="block font-bold mb-2">
+                                Estado Auditorias
+                            </label>
+                            <Select 
+                                value={selectedState} 
+                                onValueChange={(value) => setSelectedState(value)}
+                                >
+                                <SelectTrigger className="w-full sm:w-[470px] mb-4">
+                                    <SelectValue placeholder="Seleccione un estado de auditoría" />
+                                </SelectTrigger>
+                                <SelectContent className="w-full sm:w-[470px]">
+                                    <SelectGroup>
+                                    <SelectLabel>Estado Auditoría</SelectLabel>
+                                    <SelectItem value={0}>Todos</SelectItem>
+                                    <SelectItem value={1}>Iniciado</SelectItem>
+                                    <SelectItem value={2}>En Proceso</SelectItem>
+                                    <SelectItem value={3}>Finalizado</SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>N°</TableHead>
+                                        <TableHead>Nombre Auditoria</TableHead>
+                                        <TableHead>Codigo Lab/Ins</TableHead>
+                                        <TableHead>ISO</TableHead>
+                                        <TableHead>Estado</TableHead>
+                                        <TableHead>Obciones</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {auditorias.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan="6" className="text-center">No hay auditorias.</TableCell>
+                                        </TableRow>
+                                        ) : (
+                                        auditoriasFiltradas.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan="6" className="text-center">No hay auditorias que coincidan con los filtros.</TableCell>
+                                            </TableRow>
+                                            ) : (
+                                            auditoriasFiltradas.slice(startIndex, endIndex).map((auditoria) => (
+                                                <TableRow key={auditoria.codigoAuditoria}>
+                                                    <TableCell>{auditoria.codigoAuditoria}</TableCell>
+                                                    <TableCell className="max-w-[300px]">{auditoria.nombreAuditoria}</TableCell>
+                                                    <TableCell>{auditoria.codigoEntidad}</TableCell>
+                                                    <TableCell>{auditoria.normaIso.nombreNormaIso}</TableCell>
+                                                    <TableCell>{getEstado(auditoria.codigoEstadoAuditoria)}</TableCell>
+                                                    <TableCell>
+                                                        <div className="flex justify-center">
+                                                            <ModalGestion auditoria={auditoria}  />
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )))
+                                        )}
+                                </TableBody>
+                            </Table>
+                            <Pagination>
+                                <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious 
+                                    className={
+                                        startIndex === 0 ? "pointer-events-none opacity-50" : undefined
+                                    }
+                                    onClick={()=>{
+                                        setStartIndex(startIndex-filasPorPagina);
+                                        setEndIndex(endIndex-filasPorPagina);
+                                    }}
+                                    />
+                                </PaginationItem>
+                                <PaginationItem>
+                                    <PaginationNext 
+                                    className={
+                                        endIndex >= auditoriasFiltradas.length ? "pointer-events-none opacity-50" : undefined
+                                    }
+                                    onClick={()=>{
+                                        setStartIndex(startIndex+filasPorPagina);
+                                        setEndIndex(endIndex+filasPorPagina);
+                                    }}
+                                    />
+                                </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
                     </div>
-                    <ModalAudi isOpen={isModalAudiOpen} onClose={closeModalAudi}  />
-                    <ModalGestion isOpen={isModalGesOpen} onClose={closeModalGes}  />
                 </div>
     );
 }

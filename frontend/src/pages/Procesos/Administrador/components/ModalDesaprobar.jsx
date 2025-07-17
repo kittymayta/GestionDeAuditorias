@@ -1,66 +1,80 @@
-import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { ButtonBlue, ButtonGray } from "@/components/custom/button";
 import { SquareX } from 'lucide-react';
+import useCRUD from '@/hooks/useCrud';
+import { toast } from "sonner"
+import { useRef } from "react";
 
-export const ModalDesaprobar = ({procesoDesaprobar}) => {
-  const [open, setOpen] = useState(false);
+export const ModalDesaprobar = ({procesoDesaprobar, fetchProcesos}) => {
+  const { get, post, put, eliminar } = useCRUD();
+  const comentario = useRef(null);
 
-  const aprobarProceso = async() =>{
+  const desaprobarProceso = async() =>{
     const data = {
       nombre: procesoDesaprobar.nombre,
       descripcion: procesoDesaprobar.descripcion,
-      codigoEntidad: procesoDesaprobar.codigoEntidad,
+      entidad: {
+        codigoEntidad: procesoDesaprobar.entidad.codigoEntidad,
+      },
+      comentario: comentario.current.value,
       estado: "Desaprobado"
     };
     try {
-      const url = `http://localhost:8080/api/procesos/update/${procesoDesaprobar.codigoProceso}`;
-      const method = 'POST';
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      if(!response.ok){
-        console.log("Error al aprobar el proceso")
-      } else {
-        console.log("Proceso aprobado correctamente");
-      }
+      await post(`procesos/update/${procesoDesaprobar.codigoProceso}`, data);
+      console.log("Proceso desaprobado correctamente");
+      toast.success("Proceso desaprobado correctamente");
+      fetchProcesos();
     } catch (error) {
-      console.log("Error en la solicitud", error)
+      console.log("Error al desaprobar el proceso", error)
+      toast.error("Error al desaprobar el proceso")
     }
   }
 
   return (
-    <>
-      <button onClick={() => setOpen(true)}><SquareX className="w-6 h-6" /></button>
-      <Dialog className="text-lg" open={open} onOpenChange={setOpen}>
-        <DialogTrigger />
-        <DialogContent className="bg-white rounded-lg shadow-lg text-xl"> 
-          <DialogHeader>
-            <DialogTitle className="text-black">Desaprobar proceso</DialogTitle>
-          </DialogHeader>
-            <h1 className="text-black text-lg">Seguro que desea desaprobar este proceso</h1>
-            <div className="mt-6 flex justify-center">
-                <ButtonGray  className="mr-24 w-40" onClick={() => setOpen(false)}>Cancelar</ButtonGray>
-                <ButtonBlue className="ml-2 w-40" onClick={() => {
-                aprobarProceso();
-                setOpen(false); 
-                }}>
+    <Dialog className="text-lg">
+      <DialogTrigger>
+        <button>
+          <SquareX className="w-6 h-6" />
+        </button>
+      </DialogTrigger>
+      <DialogContent className="bg-white rounded-lg shadow-lg text-xl max-w-full p-4 sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-black">Desaprobar proceso</DialogTitle>
+        </DialogHeader>
+        <h1 className="text-black text-lg">
+          Seguro que desea desaprobar este proceso
+        </h1>
+        <h3 className="text-black text-sm mt-2">
+          Puede agregar un comentario sobre porque fue desaprobado
+        </h3>
+        <textarea
+          ref={comentario}
+          className="w-full h-40 sm:h-60 border text-black text-sm border-gray-300 rounded-lg p-2 resize-none"
+          placeholder="Escriba aquí su comentario..."
+        />
+        <DialogFooter>
+          <DialogClose>
+            <div className="mt-6 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+              <ButtonGray className="sm:w-40">Cancelar</ButtonGray>
+              <ButtonBlue
+                className="sm:w-40"
+                onClick={() => desaprobarProceso()}
+              >
                 Desaprobar
-                </ButtonBlue>
+              </ButtonBlue>
             </div>
-        </DialogContent>
-      </Dialog>
-    </>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

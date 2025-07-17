@@ -1,58 +1,172 @@
 import React, { useState, useEffect } from 'react'; 
 import { ButtonBlue } from '@/components/custom/button';
+import useCRUD from '@/hooks/useCrud';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogClose,
+  } from "@/components/ui/dialog"
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+  } from "@/components/ui/select"
+import { toast } from "sonner"
+import axios from 'axios';
 
-const AsignarAuditor = ({isOpen, onClose}) =>{
+const AsignarAuditor = ({ solicitud, fetchSolicitudes }) => {
+    const {get, post, put, eliminar} = useCRUD();
     const [lideres, setLideres] = useState([]);
-
-
+    const [fechaInicio, setFechaInicio] = useState('');
+    const [fechaFin, setFechaFin] = useState('');
+    const [selectedAuditor, setSelectedAuditor] = useState(null);
+    const [normaIso, setNormaIso] = useState(1);
+    const codigoEntidad = solicitud?.usuario?.entidad?.codigoEntidad;
+    const nombre = solicitud && solicitud.usuario
+        ? `Auditoria ${solicitud.usuario.entidad.nombreEntidad}`
+        : "Nombre no Generado";
+    
 
     useEffect(() => {
-        if (isOpen) {
-            fetchLideres();
-        }
-    }, [isOpen]);
+        fetchLideres();
+    }, []);
 
-    const fetchLideres = async()=>{
+    const fetchLideres = async () => {
         try {
-            const response = await fetch("http://localhost:8080/api/usuarios/tipoUsuario/4")
-            if (response.ok) {
-                console.log("Lideres auditores obtenidos correctamente")
-                const data = await response.json();
-                setLideres(data);
-            } else {
-                console.log("Error en la respuesta")
-            }
+            const response = await get("usuarios/tipoUsuario/4")
+            setLideres(response);
         } catch (error) {
-            console.log("Error al hacer fetch", error)
+            console.log("Error al obtener los Auditores Lideres", error);
+        }
+    };
+
+    const nuevaAudi = async() =>{
+        const data = {
+            nombreAuditoria: nombre,
+            normaIso: {
+                codigoNormaIso: normaIso,
+            },
+            codigoEstadoAuditoria: 1,
+            fechaInicio: fechaInicio,
+            fechaFinal: fechaFin,
+            codigoEntidad: codigoEntidad,
+            usuario: {
+                codigoUsuario: selectedAuditor
+            }
+        }
+        console.log("Auditoria nueva", data);
+        try {
+            await post("auditorias/create", data)
+            console.log("Auditoria creada correctamente");
+            procesarSolicitud();
+            toast.success("Auditoria creada exitosamente.");
+            fetchSolicitudes();
+        } catch (error) {
+            console.log("Error al crear la auditoria", error)
+            toast.error("Error al crear la auditoria a partir de la solicitud.")
         }
     }
-    useEffect(() => {
-        console.log("Lideres actualizados:", lideres);
-    }, [lideres]);
+    const procesarSolicitud = async () => {
+        const data = {
+            descripcion: solicitud.descripcion,
+            fechaSolicitudAuditoria: solicitud.fechaSolicitudAuditoria,
+            estadoAsignacion: true,
+            usuario: {
+                codigoUsuario: solicitud.usuario.codigoUsuario
+            }
+        };
+    
+        console.log("Actualizacion solicitud", data);
+    
+        try {
+            await axios.post(`http://localhost:23731/api/solicitudAuditorias/update/${solicitud.codigoSolicitudAuditoria}`, data);
+            console.log("Solicitud procesada correctamente");
+            toast.success("Estado de solicitud cambiado a Procesada");
+        } catch (error) {
+            console.error("Error al cambiar el estado de la solicitud a procesada", error);
+            toast.error("Error al cambiar el estado de la solicitud a procesada");
+        }
+    };
 
-    if (!isOpen) return null;
-    return(
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 text-black z-50">
-            <div className="bg-white rounded-lg shadow-lg w-2/6 max-w-4xl p-6 relative">
-                <button className="absolute top-2 right-2 text-black text-xl font-bold" onClick={onClose}>X</button>
-                <h1 className="text-2xl font-bold mb-4">Crear auditoria por solicitud</h1>
-                <p>Seleccione el auditor lider correspondiente a la solicitud</p>
-                <select className="border border-gray-300 rounded-lg p-2 w-full mt-4 mb-4">
-                    {lideres.map((lider)=>(
-                        <option value={lider.codigoUsuario}>{lider.nombreUsuario} {lider.apellidoPat} {lider.apellidoMat}</option>
-                    ))}
-                </select>
-                <p>Seleccione la norma ISO</p>
-                <select className="border border-gray-300 rounded-lg p-2 w-full my-4">
-                    <option value="1">ISO 9001</option>
-                    <option value="2">ISO 17025</option>
-                    <option value="3">ISO 21001</option>
-                </select>
-                <div className='w-full flex justify-end'>
-                    <ButtonBlue className="px-6">Asignar</ButtonBlue>
+    return (
+        <Dialog>
+            <DialogTrigger>
+                <img src="/images/icono-personacheck.png" alt="Asignar Auditor" className="w-6 h-6" />
+            </DialogTrigger>
+            <DialogContent className="bg-white text-black max-w-full md:max-w-lg mx-auto">
+                <DialogHeader>
+                    <DialogTitle>Crear auditoria</DialogTitle>
+                    <DialogDescription>En este espacio usted puede crear una auditoria a partir de una solicitud.</DialogDescription>
+                </DialogHeader>
+                <p className="text-sm md:text-base">Seleccione el auditor líder correspondiente a la solicitud</p>
+                <Select onValueChange={(value) => setSelectedAuditor(value)}>
+                    <SelectTrigger className="w-full md:w-[470px]">
+                        <SelectValue placeholder="Seleccione un Auditor Lider" />
+                    </SelectTrigger>
+                    <SelectContent className="w-full md:w-[470px]">
+                        <SelectGroup>
+                            <SelectLabel>Lideres Auditores</SelectLabel>
+                            {lideres.map((lider) => (
+                                <SelectItem key={lider.codigoUsuario} value={lider.codigoUsuario}>
+                                    {lider.nombreUsuario} {lider.apellidoPat} {lider.apellidoMat}
+                                </SelectItem>
+                            ))}
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+                <p className="text-sm md:text-base">Seleccione la norma ISO</p>
+                <Select onValueChange={(value) => setNormaIso(value)}>
+                    <SelectTrigger className="w-full md:w-[470px]">
+                        <SelectValue placeholder="Seleccione una norma ISO" />
+                    </SelectTrigger>
+                    <SelectContent className="w-full md:w-[470px]">
+                        <SelectGroup>
+                            <SelectLabel>Normas ISO</SelectLabel>
+                            <SelectItem value={1}>ISO 9001</SelectItem>
+                            <SelectItem value={2}>ISO 17025</SelectItem>
+                            <SelectItem value={3}>ISO 21001</SelectItem>
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+                <div className="flex flex-wrap space-y-4 md:space-y-0 md:space-x-4">
+                    <div className="mb-4 w-full md:w-1/2">
+                        <label className="block mb-2 text-sm">Fecha de Inicio:</label>
+                        <input
+                            type="date"
+                            value={fechaInicio}
+                            onChange={(e) => setFechaInicio(e.target.value)}
+                            className="border border-gray-300 rounded-lg p-2 w-full"
+                        />
+                    </div>
+                    <div className="mb-4 w-full md:w-1/2">
+                        <label className="block mb-2 text-sm">Fecha de Fin:</label>
+                        <input
+                            type="date"
+                            value={fechaFin}
+                            onChange={(e) => setFechaFin(e.target.value)}
+                            className="border border-gray-300 rounded-lg p-2 w-full"
+                        />
+                    </div>
                 </div>
-            </div>
-        </div>
+                <DialogFooter className="flex justify-center md:justify-end">
+                    <DialogClose>
+                        <ButtonBlue className="px-6" onClick={nuevaAudi}>
+                            Asignar
+                        </ButtonBlue>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
-}
+};
+
 export default AsignarAuditor;

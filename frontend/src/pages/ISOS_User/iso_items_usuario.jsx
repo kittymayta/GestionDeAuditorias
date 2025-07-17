@@ -81,7 +81,7 @@ const Iso9000Admin = () => {
           ISO {getIso(parseInt(iso))}: Sistemas de gestión de la calidad
         </h1>
         <div className="flex-grow justify-items-start mt-6 border border-black rounded-lg py-4 mr-2 min-h-96 px-5">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full">
           <Table className="w-full">
             <TableHeader>
               <TableRow>

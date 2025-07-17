@@ -1,10 +1,33 @@
 import { useState, useEffect } from 'react';
 import { ButtonBlue, ButtonGray } from "@/components/custom/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import useCRUD from '@/hooks/useCrud';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { toast } from "sonner"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, } from "@/components/ui/tooltip"
 
-const ModalEditar = ({isOpen, onClose, user, onConfirm } ) => {
-  if (!isOpen) return null;
+
+const ModalEditar = ({user, fetchUsuarios} ) => {
+  const { get, post, put, eliminar } = useCRUD();
+  const [open, setOpen] = useState(false);
   const [id, setId] = useState(user.codigoUsuario || null);
-  const [role, setRole] = useState(user.tipoUsuario.codigoTipoUsuario || 1);
+  const [role, setRole] = useState(user.tipoUsuario.codigoTipoUsuario);
   const [labOrInstitute, setLabOrInstitute] = useState(user.entidad?.codigoEntidad || null);
   const [entities, setEntities] = useState([]);
   const [nombre, setNombre] = useState(user.nombreUsuario);
@@ -14,40 +37,43 @@ const ModalEditar = ({isOpen, onClose, user, onConfirm } ) => {
   const [dni, setDni] = useState(user.dni);
   const [telefono, setTelefono] = useState(user.telefono);
   const [error, setError] = useState('');
-  
-
-  document.body.style.overflow = 'hidden';
+  const [tiposUsuarios, setTiposUsuarios]=useState([]);
 
   useEffect(() => {
-    if (role === 2 || role === 3) {
-      fetch('http://localhost:8080/api/entidades', {
-        method: 'GET',
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then((data) => {
-          setEntities(data);
-        })
-        .catch((error) => {
-          console.error('Error fetching entities:', error);
-        });
-    } else {
-      setEntities([]);
+    const fetchInitialData = async () => {
+      try {
+        const [tipoResponse, entidadResponse] = await Promise.all([
+          get("tipoUsuarios"),
+          get("entidades")
+        ]);
+        setTiposUsuarios(tipoResponse);
+        setEntities(entidadResponse);
+      } catch (error) {
+        console.error("Error en la carga de datos iniciales: ", error);
+      }
+    };
+    fetchInitialData();
+  }, []);
+  useEffect(() => {
+    if (open) {
+      setId(user.codigoUsuario || null);
+      setRole(user.tipoUsuario.codigoTipoUsuario);
+      setLabOrInstitute(user.entidad?.codigoEntidad || null);
+      setNombre(user.nombreUsuario);
+      setEmail(user.correoElectronico);
+      setApellidoPat(user.apellidoPat);
+      setApellidoMat(user.apellidoMat);
+      setDni(user.dni);
+      setTelefono(user.telefono);
     }
-  }, [role]);
+  }, [open, user]);
 
-  const handleRoleChange = (event) => {
-    setRole(Number(event.target.value));
-    setLabOrInstitute('');
+  const handleRoleChange = (value) => {
+    setRole(value);
   };
 
-  const handleOptionChange = (e) => {
-    setLabOrInstitute(e.target.value);
-    console.log('Código de la entidad seleccionada:', labOrInstitute);
+  const handleOptionChange = (value) => {
+    setLabOrInstitute(value);
   };
 
   const handleSubmit = async () => {
@@ -87,41 +113,38 @@ const ModalEditar = ({isOpen, onClose, user, onConfirm } ) => {
       }
     }
     setError('');
+    const userData = {
+      nombreUsuario: nombre,
+      apellidoPat: apellidoPat,
+      apellidoMat: apellidoMat,
+      dni: dni,
+      correoElectronico: email,
+      telefono: telefono,
+      tipoUsuario: {
+        codigoTipoUsuario: role
+      },
+      entidad: (role === 2 || role === 3) ? {
+        codigoEntidad: labOrInstitute
+      } : null,
+      estadoUso: true,
+    }
     try {
-        const response = await fetch(`http://localhost:8080/api/usuarios/update/${id}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            nombreUsuario: nombre,
-            apellidoPat: apellidoPat,
-            apellidoMat: apellidoMat,
-            dni: dni,
-            correoElectronico: email,
-            telefono: telefono,
-            tipoUsuario: {
-              codigoTipoUsuario: role
-            },
-            entidad: (role === 2 || role === 3) ? {
-              codigoEntidad: labOrInstitute
-            } : null,
-            estadoUso: true,
-          }),
-        });
-        console.log("Datos nuevos del usuario: ", JSON.stringify);
-        if (!response.ok) {
-          throw new Error('Error updating user data');
-        }
-    
-        const data = await response.json();
-        console.log('Usuario actualizado:', data);
-        onClose();
-        onConfirm();
-      } catch (error) {
-        console.error('Error updating user:', error);
-      }
-      document.body.style.overflow = 'auto';
+      await post(`usuarios/update/${id}`, userData);
+      setRole(1);
+      setLabOrInstitute(1);
+      setNombre('');
+      setEmail('');
+      setApellidoPat('');
+      setApellidoMat('');
+      setDni('');
+      setTelefono('');
+      setOpen(false)
+      toast.success("Usuario actualizado exitosamente")
+      fetchUsuarios();
+    } catch (err) {
+      console.error('Error al enviar los datos:', err);
+      toast.error("Error al enviar los datos actualizados del usuario")
+    }
   }
 
 
@@ -134,62 +157,79 @@ const ModalEditar = ({isOpen, onClose, user, onConfirm } ) => {
     setTelefono('');
     setRole(1); 
     setLabOrInstitute('');
-    onClose();
-    document.body.style.overflow = 'auto';
+    setOpen(false)
   };
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white w-1/2 p-8 rounded-lg shadow-lg relative">
-        <h2 className="text-2xl font-bold mb-4 text-black text-center">EDITAR USUARIO</h2>
-        
-        {/* Primer div con borde negro y esquinas redondeadas */}
-        <div className="border border-black rounded-lg p-4 mb-6 text-black">
-          <h3 className="text-xl font-semibold mb-4 ">Roles</h3>
-          {/* Primera fila: Seleccionar Rol */}
-          <div className="flex space-x-4 mb-4">
-            <div className="flex-1">
-              <label className="block mb-2 font-bold">Seleccionar Rol:</label>
-              <select
-                className="border border-gray-300 rounded-lg p-2 w-full"
-                value={role}
-                onChange={handleRoleChange}
-              >
-                <option value="1">Administrador</option>
-                <option value="2">Auditor</option>
-                <option value="3">Coordinador</option>
-                <option value="4">Operador</option>
-              </select>
-            </div>
+    <>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger onClick={() => setOpen(true)}><img src="/images/icono_editar.png" alt="Editar" className="w-6 h-6" /></TooltipTrigger>
+        <TooltipContent>
+          <p>Editar Usuario</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger />
+      <DialogContent className="bg-white w-full max-w-lg sm:max-w-3xl text-black p-4 sm:p-6 overflow-y-auto max-h-screen">
+        <DialogHeader>
+          <DialogTitle>EDITAR USUARIO</DialogTitle>
+          <DialogDescription>
+            En este espacio usted puede editar los campos del usuario.
+          </DialogDescription>
+        </DialogHeader>
 
-            <div className="flex-1 text-black">
-              <label className="block font-bold mb-2">
-                {role === 2 || role === 3 ? 'Laboratorio/Instituto' : ''}
-              </label>
-              <select
-                value={labOrInstitute} 
-                onChange={handleOptionChange}
-                className="border border-gray-300 rounded-lg p-2 w-full"
-                style={{ display: role === 2 || role === 3 ? 'block' : 'none' }}
-              >
-                {/* Renderizar las opciones dinámicamente */}
-                {entities.map((entity) => (
-                  <option key={entity.id} value={entity.codigoEntidad}> {/* Usar codigoEntidad como valor */}
-                    {entity.nombreEntidad}
-                  </option>
-                ))}
-              </select>
+        <div className="overflow-y-auto max-h-screen pb-16">
+        {/* Div de Roles */}
+        <div className="border border-black rounded-lg p-4 mb-6 text-black">
+          <h3 className="text-xl font-semibold mb-4">Roles</h3>
+          <div className="flex flex-col sm:flex-row sm:space-x-4 mb-4">
+            <div className="w-full sm:flex-1">
+              <label className="block mb-2 font-bold">Seleccionar Rol:</label>
+              <Select value={role} onValueChange={handleRoleChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Roles</SelectLabel>
+                    {tiposUsuarios.map((tipo) => (
+                      <SelectItem key={tipo.codigoTipoUsuario} value={tipo.codigoTipoUsuario}>
+                        {tipo.nombreTipoUsuario}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
-           </div>
+            {role === 2 || role === 3 ? (
+              <div className="w-full sm:flex-1 mt-4 sm:mt-0">
+                <label className="block mb-2 font-bold">Laboratorio/Instituto:</label>
+                <Select value={labOrInstitute} onValueChange={handleOptionChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Entidades" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Entidades</SelectLabel>
+                      {entities.map((entidad) => (
+                        <SelectItem key={entidad.codigoEntidad} value={entidad.codigoEntidad}>
+                          {entidad.nombreEntidad}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
+          </div>
         </div>
 
-        {/* Segundo div para almacenar más campos en dos filas */}
+        {/* Div de Datos */}
         <div className="border border-black rounded-lg p-4 mb-6 text-black">
-        <div className="flex-grow">
           <h3 className="text-xl font-bold mb-4">Datos</h3>
-          
-          {/* Primera fila de campos */}
-          <div className="flex space-x-4 mb-4">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row sm:space-x-4 mb-4">
+            <div className="w-full sm:flex-1">
               <label className="block mb-2 font-bold">Nombres</label>
               <input
                 type="text"
@@ -198,8 +238,8 @@ const ModalEditar = ({isOpen, onClose, user, onConfirm } ) => {
                 className="border border-gray-300 rounded-lg p-2 w-full"
               />
             </div>
-            <div className="flex-1">
-              <label className="block mb-2 font-bold">Correo electronico</label>
+            <div className="w-full sm:flex-1 mt-4 sm:mt-0">
+              <label className="block mb-2 font-bold">Correo Electrónico</label>
               <input
                 type="text"
                 value={email}
@@ -209,9 +249,8 @@ const ModalEditar = ({isOpen, onClose, user, onConfirm } ) => {
             </div>
           </div>
 
-          {/* Segunda fila de campos */}
-          <div className="flex space-x-4 mb-4">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row sm:space-x-4 mb-4">
+            <div className="w-full sm:flex-1">
               <label className="block mb-2 font-bold">Apellido Paterno</label>
               <input
                 type="text"
@@ -220,9 +259,9 @@ const ModalEditar = ({isOpen, onClose, user, onConfirm } ) => {
                 className="border border-gray-300 rounded-lg p-2 w-full"
               />
             </div>
-            <div className="flex-1">
+            <div className="w-full sm:flex-1 mt-4 sm:mt-0">
               <label className="block mb-2 font-bold">Apellido Materno</label>
-              <input 
+              <input
                 type="text"
                 value={apellidoMat}
                 onChange={(e) => setApellidoMat(e.target.value)}
@@ -231,9 +270,8 @@ const ModalEditar = ({isOpen, onClose, user, onConfirm } ) => {
             </div>
           </div>
 
-          {/* Tercera fila de campos */}
-          <div className="flex space-x-4 mb-4">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row sm:space-x-4 mb-4">
+            <div className="w-full sm:flex-1">
               <label className="block mb-2 font-bold">DNI</label>
               <input
                 type="text"
@@ -242,26 +280,30 @@ const ModalEditar = ({isOpen, onClose, user, onConfirm } ) => {
                 className="border border-gray-300 rounded-lg p-2 w-full"
               />
             </div>
-            <div className="flex-1">
-              <label className="block mb-2 font-bold">Telefono</label>
-              <input 
+            <div className="w-full sm:flex-1 mt-4 sm:mt-0">
+              <label className="block mb-2 font-bold">Teléfono</label>
+              <input
                 type="text"
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
                 className="border border-gray-300 rounded-lg p-2 w-full"
-                />
+              />
             </div>
           </div>
+        </div>
+        
+
+        {/* Footer */}
+        <DialogFooter className="border-t border-gray-200 pt-2 mt-2 bg-white">
+          <div className="flex justify-end space-x-2">
+            <ButtonGray onClick={handleCancel}>Cancelar</ButtonGray>
+            <ButtonBlue onClick={handleSubmit}>Guardar</ButtonBlue>
           </div>
+        </DialogFooter>
         </div>
-        {error && <div className="text-red-600 mb-6 justify-center w-full items-center text-center">{error}</div>}
-        {/* Botones de Guardar y Cancelar */}
-        <div className="flex justify-center mt-4 space-x-12">
-          <ButtonGray className="px-16" onClick={handleCancel}>Cancelar</ButtonGray>
-          <ButtonBlue className="px-16" onClick={handleSubmit}>Guardar</ButtonBlue>
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
+    </>
   )};
 
   export default ModalEditar;

@@ -1,66 +1,60 @@
-import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { ButtonBlue, ButtonGray } from "@/components/custom/button";
 import { SquareCheckBig } from 'lucide-react';
+import useCRUD from '@/hooks/useCrud';
+import { toast } from "sonner"
 
-export const ModalAprobar = ({procesoAprobar}) => {
-  const [open, setOpen] = useState(false);
+
+export const ModalAprobar = ({procesoAprobar, fetchProcesos}) => {
+  const { get, post, put, eliminar } = useCRUD();
 
   const aprobarProceso = async() =>{
     const data = {
       nombre: procesoAprobar.nombre,
       descripcion: procesoAprobar.descripcion,
-      codigoEntidad: procesoAprobar.codigoEntidad,
+      entidad: {
+        codigoEntidad: procesoAprobar.entidad.codigoEntidad,
+      },
+      comentario: "",
       estado: "Aprobado"
     };
     try {
-      const url = `http://localhost:8080/api/procesos/update/${procesoAprobar.codigoProceso}`;
-      const method = 'POST';
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      if(!response.ok){
-        console.log("Error al aprobar el proceso")
-      } else {
-        console.log("Proceso aprobado correctamente");
-      }
+      await post(`procesos/update/${procesoAprobar.codigoProceso}`, data);
+      console.log("Proceso aprobado correctamente");
+      toast.success("Proceso aprobado correctamente");
+      fetchProcesos();
     } catch (error) {
-      console.log("Error en la solicitud", error)
+      console.log("Error al aprobar el proceso", error)
+      toast.error("Error al aprobar el proceso")
     }
   }
 
   return (
-    <>
-      <button onClick={() => setOpen(true)}><SquareCheckBig className="w-6 h-6" /></button>
-      <Dialog className="text-lg" open={open} onOpenChange={setOpen}>
-        <DialogTrigger />
-        <DialogContent className="bg-white rounded-lg shadow-lg text-xl"> 
-          <DialogHeader>
-            <DialogTitle className="text-black">Aprobar proceso</DialogTitle>
-          </DialogHeader>
-            <h1 className="text-black text-lg">Seguro que desea aprobar este proceso</h1>
-            <div className="mt-6 flex justify-center">
-                <ButtonGray  className="mr-24 w-40" onClick={() => setOpen(false)}>Cancelar</ButtonGray>
-                <ButtonBlue className="ml-2 w-40" onClick={() => {
-                aprobarProceso();
-                setOpen(false); 
-                }}>
-                Aprobar
-                </ButtonBlue>
+    <Dialog className="text-lg">
+      <DialogTrigger><button><SquareCheckBig className="w-6 h-6" /></button></DialogTrigger>
+      <DialogContent className="bg-white rounded-lg shadow-lg text-xl max-w-full p-4 sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-black">Aprobar proceso</DialogTitle>
+        </DialogHeader>
+        <h1 className="text-black text-lg">Seguro que desea aprobar este proceso</h1>
+        <DialogFooter>
+          <DialogClose>
+            <div className="mt-6 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+              <ButtonGray className="sm:w-40">Cancelar</ButtonGray>
+              <ButtonBlue className="sm:w-40" onClick={aprobarProceso}>Aprobar</ButtonBlue>
             </div>
-        </DialogContent>
-      </Dialog>
-    </>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

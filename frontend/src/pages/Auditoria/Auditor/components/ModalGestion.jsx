@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; 
+import React, { useState, useEffect } from 'react'; 
 import {
     ResizableHandle,
     ResizablePanel,
@@ -8,102 +8,181 @@ import { ButtonBlue } from "@/components/custom/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import CardMicro from './Card';
 import CrearMicroAuditoria from './creacion';
+import VerMicro from './verMicro';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogClose,
+  } from "@/components/ui/dialog"
+import useCRUD from '@/hooks/useCrud';
+import { toast } from "sonner"
 
 
-const ModalGestion = ({isOpen, onClose}) => {
+const ModalGestion = ({auditoria}) => {
+    const {get, post, put, eliminar}=useCRUD();
     const [visibleMicro, setVisibleMicro] = useState(false);
     const [visibleCreate, setVisibleCreate] = useState(false);
-    const [numeroM, setNumeroM] = useState("");
-    const [procesoM, setProcesoM] = useState("");
-    const [subitemM, setSubitemM] = useState("");
-    const [fechaM, setFechaM] = useState("");
-    const [auditoriaIniciada, setAuditoriaIniciada] = useState(false);
+    const [selectedMicro, setSelectedMicro]=useState(null);
+    const [auditoriaIniciada, setAuditoriaIniciada] = useState(auditoria.codigoEstadoAuditoria);
+    const [micros, setMicros]=useState([]);
 
-    const handleSelect = (numero, proceso, subitem, fecha) => {
-        setNumeroM(numero);
-        setProcesoM(proceso);
-        setSubitemM(subitem);
-        setFechaM(fecha);
-        setVisibleMicro(true);
-        setVisibleCreate(false);
+    useEffect(() => {
+        fetchMicros();
+    }, []);
+
+    const fetchMicros = async() =>{
+        try {
+            const response = await get(`microAuditoria/auditoria/${auditoria.codigoAuditoria}`);
+            console.log(response);
+            setMicros(response);
+        } catch (error) {
+            console.log("Error al obtener las auditorias proceso: ", error);
+        }
     }
     const handleCreate = () => {
         setVisibleCreate(true);
         setVisibleMicro(false);
     }
-
-    const handleClose = () => {
-        setVisibleCreate(false);
-        setVisibleMicro(false);
-        onClose();
-    }
     
-    const handleStart = () => {
-        setAuditoriaIniciada(true);
-        setVisibleCreate(false);
-        setVisibleMicro(false);
+    const handleStart = async() => {
+        const data = {
+            nombreAuditoria: auditoria.nombreAuditoria,
+            normaIso: {
+                codigoNormaIso: auditoria.normaIso.codigoNormaIso,
+            },
+            codigoEstadoAuditoria: 2,
+            fechaInicio: auditoria.fechaInicio,
+            fechaFinal: auditoria.fechaFinal,
+            codigoEntidad: auditoria.codigoEntidad,
+            usuario: {
+                codigoUsuario: auditoria.usuario.codigoUsuario
+            }
+        }
+        try {
+            await post(`auditorias/update/${auditoria.codigoAuditoria}`, data)
+            toast.success("Auditoria iniciada exitosamente");
+            setAuditoriaIniciada(2);
+            setVisibleCreate(false);
+            setVisibleMicro(false);
+        } catch (error) {
+            console.log("Error al iniciar la nueva auditoria:", error);
+            toast.error("Hubo un error al momento de iniciar la auditoria");
+        }
     }
 
-    if (!isOpen) return null;
+    const handleFinish = async() => {
+        const data = {
+            nombreAuditoria: auditoria.nombreAuditoria,
+            normaIso: {
+                codigoNormaIso: auditoria.normaIso.codigoNormaIso,
+            },
+            codigoEstadoAuditoria: 3,
+            fechaInicio: auditoria.fechaInicio,
+            fechaFinal: auditoria.fechaFinal,
+            codigoEntidad: auditoria.codigoEntidad,
+            usuario: {
+                codigoUsuario: auditoria.usuario.codigoUsuario
+            }
+        }
+        try {
+            await post(`auditorias/update/${auditoria.codigoAuditoria}`, data)
+            toast.success("Auditoria finalizada exitosamente");
+            setAuditoriaIniciada(3);
+            setVisibleCreate(false);
+            setVisibleMicro(false);
+        } catch (error) {
+            console.log("Error al finalizar la auditoria:", error);
+            toast.error("Hubo un error al momento de finalizar la auditoria");
+        }
+    }
+    const handleSelectMicro = (micro) => {
+        setSelectedMicro(micro);
+        setVisibleMicro(true);
+        setVisibleCreate(false);
+    };
+
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 text-black z-50">
-            <div className="bg-white rounded-lg shadow-lg w-4/6 p-6 relative h-5/6">
-                <div className='w-full flex justify-center mb-6'>
-                    <button className="absolute top-2 right-2 text-black text-xl font-bold" onClick={handleClose}>X</button>
-                    <h2 className="text-2xl font-bold mb-4">Gestión de auditoría</h2>
+        <Dialog>
+            <DialogTrigger>
+                <img src="/images/icon-interroga.png" alt="Procesos" className="w-6 h-6 cursor-pointer" />
+            </DialogTrigger>
+            <DialogContent className="bg-white text-black w-[1000px] max-w-[100vw] max-h-screen overflow-hidden">
+                <DialogHeader>
+                <DialogTitle>Gestión de auditoría</DialogTitle>
+                <DialogDescription>
+                    En este espacio usted puede gestionar los aspectos de una auditoría
+                </DialogDescription>
+                </DialogHeader>
+                
+                {/* Contenedor principal con scroll horizontal habilitado */}
+                <div className="overflow-x-auto w-full h-[80vh]">
+                <ResizablePanelGroup
+                    direction="horizontal"
+                    className="h-full w-[1600px] min-w-[100%] rounded-lg border border-black md:min-w-[450px]"
+                >
+                    {/* Panel Izquierdo */}
+                    <ResizablePanel defaultSize={40} minSize={20}>
+                    {auditoriaIniciada === 1 && (
+                        <div className="flex justify-center space-x-3 py-2">
+                        <ButtonBlue className="px-10" onClick={() => handleCreate()}>
+                            Nuevo
+                        </ButtonBlue>
+                        <ButtonBlue className="px-4" onClick={handleStart}>
+                            Iniciar Auditoría
+                        </ButtonBlue>
+                        </div>
+                    )}
+                    {auditoriaIniciada === 2 && (
+                        <div className="flex justify-center space-x-3 py-2">
+                        <ButtonBlue className="px-4" onClick={handleFinish}>
+                            Finalizar Auditoría
+                        </ButtonBlue>
+                        </div>
+                    )}
+                    <ScrollArea className="h-[473px] w-full rounded-md overflow-auto">
+                        {micros.length === 0 ? (
+                        <label>No hay auditorías-proceso para mostrar</label>
+                        ) : (
+                        micros.map((micro) => (
+                            <CardMicro
+                            key={micro.codigoMicroAuditoria}
+                            micro={micro}
+                            onClick={() => handleSelectMicro(micro)}
+                            />
+                        ))
+                        )}
+                    </ScrollArea>
+                    </ResizablePanel>
+                    
+                    <ResizableHandle withHandle />
+                    
+                    {/* Panel derecho */}
+                    <ResizablePanel defaultSize={75} minSize={40}>
+                    {visibleMicro && !visibleCreate && selectedMicro && (
+                        <VerMicro micro={selectedMicro} />
+                    )}
+                    {visibleCreate && !visibleMicro && (
+                        <CrearMicroAuditoria
+                        auditoria={auditoria}
+                        confirmar={() => setVisibleCreate(false)}
+                        fetchMicros={() => fetchMicros()}
+                        />
+                    )}
+                    </ResizablePanel>
+                </ResizablePanelGroup>
                 </div>
-                <div className='h-5/6'>
-                    <ResizablePanelGroup
-                        direction="horizontal"
-                        className="min-h-full max-w-full rounded-lg border border-black md:min-w-[450px]"
-                        >
-                        <ResizablePanel defaultSize={40} minSize={20}>
-                            { !auditoriaIniciada &&
-                                <div className='flex justify-center space-x-3 py-2'>
-                                    <ButtonBlue className="px-10" onClick={()=>{handleCreate()}}>Nuevo</ButtonBlue>
-                                    <ButtonBlue className="px-4" onClick={handleStart}>Iniciar Auditoria</ButtonBlue>
-                                </div>
-                            }
-                            <ScrollArea className="h-[473px] w-full rounded-md">
-                                <CardMicro Numero={"1"} Proceso={"Proceso de gestion"} SubItem={"Sub item de ejemplo"} Fecha={"Ahorita"} onClick={()=>{handleSelect("1","Proceso de Gestion", "Subitem de Ejemplo", "HOYYYYY")}}/>
-                                <CardMicro Numero={"2"} Proceso={"Proceso de gestion"} SubItem={"Sub item de ejemplo"} Fecha={"Ahorita"} onClick={()=>{handleSelect("2","Proceso de Gestion", "Subitem de Ejemplo", "HOYYYYY")}}/>
-                                <CardMicro Numero={"3"} Proceso={"Proceso de gestion"} SubItem={"Sub item de ejemplo"} Fecha={"Ahorita"} onClick={()=>{handleSelect("3","Proceso de Gestion", "Subitem de Ejemplo", "HOYYYYY")}}/>
-                                <CardMicro Numero={"4"} Proceso={"Proceso de gestion"} SubItem={"Sub item de ejemplo"} Fecha={"Ahorita"} onClick={()=>{handleSelect("4","Proceso de Gestion", "Subitem de Ejemplo", "HOYYYYY")}}/>
-                                <CardMicro Numero={"5"} Proceso={"Proceso de gestion"} SubItem={"Sub item de ejemplo"} Fecha={"Ahorita"} onClick={()=>{handleSelect("5","Proceso de Gestion", "Subitem de Ejemplo", "HOYYYYY")}}/>
-                                <CardMicro Numero={"6"} Proceso={"Proceso de gestion"} SubItem={"Sub item de ejemplo"} Fecha={"Ahorita"} onClick={()=>{handleSelect("6","Proceso de Gestion", "Subitem de Ejemplo", "HOYYYYY")}}/>
-                                <CardMicro Numero={"7"} Proceso={"Proceso de gestion"} SubItem={"Sub item de ejemplo"} Fecha={"Ahorita"} onClick={()=>{handleSelect("7","Proceso de Gestion", "Subitem de Ejemplo", "HOYYYYY")}}/>
-                                <CardMicro Numero={"8"} Proceso={"Proceso de gestion"} SubItem={"Sub item de ejemplo"} Fecha={"Ahorita"} onClick={()=>{handleSelect("8","Proceso de Gestion", "Subitem de Ejemplo", "HOYYYYY")}}/>
-                                <CardMicro Numero={"9"} Proceso={"Proceso de gestion"} SubItem={"Sub item de ejemplo"} Fecha={"Ahorita"} onClick={()=>{handleSelect("9","Proceso de Gestion", "Subitem de Ejemplo", "HOYYYYY")}}/>
-                                
-                            </ScrollArea>
-                        </ResizablePanel>
-                        <ResizableHandle withHandle />
-                        <ResizablePanel defaultSize={75} minSize={40}>
-                        {visibleMicro && !visibleCreate &&
-                            <div className="flex flex-col h-full items-start p-6 w-full">
-                                <div className="flex items-center justify-center p-6 w-full">
-                                    <h1>Numero: {numeroM}</h1>
-                                </div>
-                                <div>
-                                    <h2>Proceso: {procesoM}</h2>
-                                </div>
-                                <div>
-                                    <h2>SubItem: {subitemM}</h2>
-                                </div>
-                                <div>
-                                    <h2>Fecha: {fechaM}</h2>
-                                </div>
-                            </div>
-                        }
-                        {visibleCreate && !visibleMicro &&
-                            <CrearMicroAuditoria/>
-                        }
-                        </ResizablePanel>
-                    </ResizablePanelGroup>
-                </div>
-            </div>
-        </div>
+
+                <DialogFooter>
+                <DialogClose />
+                </DialogFooter>
+            </DialogContent>
+            </Dialog>
     );
 }
 
