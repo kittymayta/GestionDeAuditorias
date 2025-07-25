@@ -88,7 +88,7 @@ const AsignarAuditor = ({ solicitud, fetchSolicitudes }) => {
         console.log("Actualizacion solicitud", data);
     
         try {
-            await axios.post(`https://gestiondeauditorias-1.onrender.com/api/solicitudAuditorias/update/${solicitud.codigoSolicitudAuditoria}`, data);
+            await axios.post(`http://localhost:23731/api/solicitudAuditorias/update/${solicitud.codigoSolicitudAuditoria}`, data);
             console.log("Solicitud procesada correctamente");
             toast.success("Estado de solicitud cambiado a Procesada");
         } catch (error) {

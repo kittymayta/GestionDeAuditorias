@@ -40,7 +40,7 @@ const ModalDocumentacionSubitem = ({ id }) => {
   }
   const eliminarArchivo = async(archivo)=>{
     try {
-      await axios.delete(`https://gestiondeauditorias-1.onrender.com/api/file/eliminarEjemplo/${archivo}`);
+      await axios.delete(`http://localhost:23731/api/file/eliminarEjemplo/${archivo}`);
       toast.success("Archivo eliminado con exito");
       fetchArchivos();
     } catch (error) {
