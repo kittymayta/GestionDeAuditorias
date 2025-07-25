@@ -1,4 +1,4 @@
-import { NuevaSolicitud } from "./components/ModalShdcn";
+import { NuevaSolicitud } from "../../../components_auditoria/Usuario/ModalShdcn";
 import { useState, useEffect } from "react";
 import useCRUD from '@/hooks/useCrud';
 import {
@@ -93,15 +93,16 @@ const Auditoria = () => {
                                         <TableCell colSpan="6" className="text-center">No hay auditorias que coincidan con los filtros.</TableCell>
                                     </TableRow>
                                     ) : (
-                                    solicitudesFiltradas.slice(startIndex, endIndex).map((solicitud) => (
-                                        <TableRow>
-                                            <TableCell>{solicitud.codigoSolicitudAuditoria}</TableCell>
-                                            <TableCell>{solicitud.usuario.nombreUsuario} {solicitud.usuario.apellidoPat} {solicitud.usuario.apellidoMat}</TableCell>
-                                            <TableCell>{solicitud.usuario.entidad.nombreEntidad}</TableCell>
-                                            <TableCell>{solicitud.descripcion}</TableCell>
-                                            <TableCell>{getEstado(solicitud.estadoAsignacion)}</TableCell>
-                                        </TableRow>
-                                    )))
+                                        solicitudesFiltradas.slice(startIndex, endIndex).map((solicitud) => (
+                                            <TableRow key={solicitud.codigoSolicitudAuditoria}>
+                                              <TableCell>{solicitud.codigoSolicitudAuditoria}</TableCell>
+                                              <TableCell>{solicitud.usuario.nombreUsuario} {solicitud.usuario.apellidoPat} {solicitud.usuario.apellidoMat}</TableCell>
+                                              <TableCell>{solicitud.usuario.entidad.nombreEntidad}</TableCell>
+                                              <TableCell>{solicitud.descripcion}</TableCell>
+                                              <TableCell>{getEstado(solicitud.estadoAsignacion)}</TableCell>
+                                            </TableRow>
+                                          ))
+                                          )
                                 )
                             }
                         </TableBody>

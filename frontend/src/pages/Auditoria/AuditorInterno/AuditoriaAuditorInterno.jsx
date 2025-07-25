@@ -6,10 +6,10 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import CardMicro from './components/tarjeta';
+import CardMicro from '../../../components_auditoria/AuditorInterno/tarjeta';
 import useCRUD from '@/hooks/useCrud';
 import ObtenerUsuario from '@/hooks/getUser';
-import VerMicro from './components/verAuditoria';
+import VerMicro from '../../../components_auditoria/AuditorInterno/verAuditoria';
 
 const AuditoriaAuditorInterno = () => {
   const {get}=useCRUD();
@@ -57,7 +57,7 @@ const AuditoriaAuditorInterno = () => {
                   <p>No hay Auditorias Proceso por el Momento</p>
                 ) : (
                   micros.map((micro) => (
-                    <CardMicro micro={micro} onClick={()=>{setSelectedMicro(micro), setVisibleMicro(true)}}/>
+                    <CardMicro key={micro.codigoMicroAuditoria} micro={micro} onClick={()=>{setSelectedMicro(micro), setVisibleMicro(true)}}/>
                   ))
                 )}
                 </div>

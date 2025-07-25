@@ -40,7 +40,7 @@ const ModalExample = ({ id }) => {
   }
   const eliminarArchivo = async(archivo)=>{
     try {
-      await axios.delete(`http://localhost:23731/api/file/eliminarEjemplo/${archivo}`);
+      await axios.delete(`https://gestiondeauditorias-1.onrender.com/api/file/eliminarEjemplo/${archivo}`);
       toast.success("Archivo eliminado con exito");
       fetchArchivos();
     } catch (error) {
@@ -93,7 +93,7 @@ const fetchLinks = async () => {
   const uploadFiles = async () => {
     for (const file of selectedFiles) {
       try {
-        await uploadFile(`http://localhost:23731/api/file/subirEjemplo/${id}`, file)
+        await uploadFile(`https://gestiondeauditorias-1.onrender.com/api/file/subirEjemplo/${id}`, file)
         console.log('Archivos de ejemplo subidos con exito');
         toast.success('Archivos de ejemplo subidos con exito');
       } catch (error) {
@@ -150,7 +150,7 @@ const fetchLinks = async () => {
           <li>Tamaño máximo: ***mb.</li>
         </ul>
         <p className="mb-4 text-black text-left">
-          Una vez que tenga su archivo listo haga clic en el botón "Subir archivo" a continuación.
+        Una vez que tenga su archivo listo haga clic en el botón {"\"Subir archivo\""} a continuación.
         </p>
         </div>
         )}
