@@ -34,7 +34,7 @@ public class SpringConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("https://auditorias-unsa-proyecto.vercel.app")
+                .allowedOrigins("https://auditorias-unsa-proyecto.vercel.app", "https://gestion-de-auditorias.vercel.app/")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
