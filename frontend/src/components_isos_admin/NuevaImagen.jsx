@@ -27,7 +27,7 @@ const ModalNuevaImagen = ({ norma, fetchImagenes }) => {
 
     try {
       await axios.post(
-        `http://localhost:23731/api/file/subirImg/${norma.codigoNormaIso}`,
+        `https://gestiondeauditorias-1.onrender.com/api/file/subirImg/${norma.codigoNormaIso}`,
         formData,
         {
           headers: {
