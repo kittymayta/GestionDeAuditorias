@@ -93,7 +93,7 @@ const fetchLinks = async () => {
   const uploadFiles = async () => {
     for (const file of selectedFiles) {
       try {
-        await uploadFile(`http://localhost:23731/api/file/subirDocumento/${id}`, file)
+        await uploadFile(`https://gestiondeauditorias-1.onrender.com/api/file/subirDocumento/${id}`, file)
         console.log('Archivos de documentacion subidos con exito');
         toast.success('Archivos de documentacion subidos con exito');
       } catch (error) {
