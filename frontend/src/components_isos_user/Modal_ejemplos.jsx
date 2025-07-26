@@ -129,7 +129,7 @@ import {
                                             Nombre={titulo === "Ejemplos" ? archivo.nombreEjemplo : archivo.nombreDocumento}
                                             onClick={() =>
                                             handleOpenDocument(
-                                                `http://localhost:23731/api/file/obtener/${
+                                                `https://gestiondeauditorias-1.onrender.com/api/file/obtener/${
                                                 titulo === "Ejemplos"
                                                     ? archivo.nombreEjemplo
                                                     : archivo.nombreDocumento
