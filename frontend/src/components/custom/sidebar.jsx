@@ -107,7 +107,7 @@ import {
     }, []);
 
     return (
-      <Sidebar className="bg-custom-blue text-white">
+      <Sidebar className="bg-[#64001d] text-white">
         <SidebarHeader className="items-center">
           <img src="/images/logounsablanco.png" alt="logo" className="w-48 h-auto mt-2 mb-2" />
         </SidebarHeader>
