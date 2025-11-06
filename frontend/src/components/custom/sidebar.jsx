@@ -109,7 +109,7 @@ import {
     return (
       <Sidebar className="bg-[#64001d] text-white">
         <SidebarHeader className="items-center">
-          <img src="/images/logounsablanco.png" alt="logo" className="w-48 h-auto mt-2 mb-2" />
+          <img src="/images/LOGO_UNSA.png" alt="logo" className="w-48 h-auto mt-2 mb-2" />
         </SidebarHeader>
         <SidebarContent>
         <ScrollArea className="h-full w-full rounded-md">
