@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 
 const ButtonBlue = React.forwardRef(({ children, className, ...props }, ref) =>{
     return (
-        <Button className={`bg-custom-blue text-white py-5 rounded-full text-base hover:bg-blue-900 ${className}`} ref={ref} {...props}>
+        <Button className={`bg-[#62060f] text-white py-5 rounded-full text-base hover:bg-blue-900 ${className}`} ref={ref} {...props}>
             {children}
         </Button>
     );
